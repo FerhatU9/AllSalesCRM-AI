@@ -1,0 +1,1 @@
+"""Development API gateway for AllSales CRM."""

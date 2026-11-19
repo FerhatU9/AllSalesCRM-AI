@@ -1,0 +1,122 @@
+﻿timestamp_utc,question_id,model_route,question,expected_answer,actual_answer,source_documents,latency_seconds,reported_tokens,status,error_code,manual_correctness,reviewer_notes,http_status,error_detail
+2026-11-18T16:10:45.587305+00:00,Q01,gemini,What regions does AllSales CRM normally serve?,The European Union and the United Kingdom.,"Based on the AllSales CRM handbook, the normal target market is companies located in the European Union or the United Kingdom.",allsales_sales_policy_synthetic.md,3.955,635,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:10:49.542400+00:00,Q01,claude,What regions does AllSales CRM normally serve?,The European Union and the United Kingdom.,"AllSales CRM's normal target market is companies located in the **European Union or the United Kingdom** (with 10 to 500 employees). Region is recorded as EU or UK so the appropriate territory owner can be assigned (Section 5 – Sales team routing).
+
+Leads outside both regions are not automatically rejected. They go to the sales manager for market-eligibility review, regardless of score.",allsales_sales_policy_synthetic.md,3.213,1061,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:10:52.755973+00:00,Q02,gemini,Which three industries are preferred by AllSales CRM?,"SaaS, professional services, and retail.","The preferred industries are software-as-a-service (SaaS), professional services, and retail.",allsales_sales_policy_synthetic.md,9.42,573,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:11:02.176279+00:00,Q02,claude,Which three industries are preferred by AllSales CRM?,"SaaS, professional services, and retail.","The preferred industries are:
+
+1. Software-as-a-service (SaaS)
+2. Professional services
+3. Retail
+
+This is stated in the handbook's description of the target market. The same three industries are also used in the company-fit scoring criteria, where a lead can earn 40 points if it is in one of these industries, is located in the EU or UK, and has 10–500 employees (Section 5).",allsales_sales_policy_synthetic.md,3.382,953,ok,,PASS,Attributed scoring criteria to Section 5; correct section is 3. Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:11:05.558647+00:00,Q03,gemini,What happens when a company has 600 employees?,Send the lead to the Enterprise Sales Manager for special review; do not automatically reject it.,Organizations with more than 500 employees are sent to an enterprise manager for special review rather than being automatically rejected.,allsales_sales_policy_synthetic.md,3.226,665,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:11:08.785180+00:00,Q03,claude,What happens when a company has 600 employees?,Send the lead to the Enterprise Sales Manager for special review; do not automatically reject it.,"A company with more than 500 employees (such as 600) is not automatically rejected. Its lead is sent to the Enterprise Sales Manager for special review.
+
+Handbook context: the normal target market is companies with 10 to 500 employees, and leads above 500 employees fall outside the standard routing. This applies to businesses in the EU or UK. The handbook describes the routing for leads with more than 500 employees as going to the Enterprise Sales Manager for special review.
+
+The handbook does not specify the criteria, deadlines or approval steps used in that special review.",allsales_sales_policy_synthetic.md,4.947,1139,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:11:13.732587+00:00,Q04,gemini,Which information must be in a lead record before qualification?,"Company name, country, employee count, industry, contact name, business email, stated use case, lead source, consent status, and assigned owner.","Before a lead can be qualified, its CRM record must contain the following information:
+* Company name
+* Country
+* Employee count
+* Industry
+* Contact's name
+* Business email address
+* Stated use case
+* Lead source
+* Consent status
+* Assigned owner
+
+Source: Section 2 — Required lead record",allsales_sales_policy_synthetic.md,9.929,572,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:11:23.662152+00:00,Q04,claude,Which information must be in a lead record before qualification?,"Company name, country, employee count, industry, contact name, business email, stated use case, lead source, consent status, and assigned owner.","Per Section 2 (Required lead record), a lead's CRM record must contain all of the following before the lead can be qualified:
+
+1. Company name
+2. Country
+3. Employee count
+4. Industry
+5. Contact's name
+6. Business email address
+7. Stated use case
+8. Lead source
+9. Consent status
+10. Assigned owner
+
+**Related requirements:**
+- If either the country or the business email address is missing, the lead must be marked **Incomplete**, and no priority tier may be assigned until the missing item is supplied.
+- All remaining mandatory fields must also be completed before the lead is moved into an active sales queue.
+- Consent status is recorded as Opted In, Opted Out, or Unknown. An Unknown status must not be treated as permission to receive marketing.
+- After outreach, the owner records the most recent contact date.",allsales_sales_policy_synthetic.md,4.567,1016,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:11:28.230307+00:00,Q05,gemini,Can a lead be assigned Priority A without a business email address?,"No. A missing business email address makes the lead Incomplete, so no priority tier is assigned until it is supplied.","No. According to Section 2 — Required lead record, if either the country or the business email address is missing, the lead must be marked Incomplete, and you must not assign a priority tier until the missing item is supplied.",allsales_sales_policy_synthetic.md,9.542,471,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:11:37.772920+00:00,Q05,claude,Can a lead be assigned Priority A without a business email address?,"No. A missing business email address makes the lead Incomplete, so no priority tier is assigned until it is supplied.","No. Under Section 2 (Required lead record), if the business email address or the country is missing, the lead must be marked **Incomplete**, and no priority tier may be assigned until the missing item is supplied. That rules out Priority A (75-100 points) as well as every other tier.
+
+A business email address is also one of the mandatory fields that must be in the CRM record before a lead can be qualified.",allsales_sales_policy_synthetic.md,4.503,807,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:23:39.913431+00:00,Q06,gemini,How quickly should a lead with a score of 80 be contacted?,"Score 80 is Priority A, so the first personalized contact should occur within one business day of qualification.","A lead with a score of 80 falls into Priority A (75–100 points). A sales representative should make the first personalized contact within one business day of qualification. 
+
+Reference: Section 4 — Priority tiers and follow-up times",allsales_sales_policy_synthetic.md,12.117,490,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:27:58.235556+00:00,Q06,claude,How quickly should a lead with a score of 80 be contacted?,"Score 80 is Priority A, so the first personalized contact should occur within one business day of qualification.","A lead with a score of 80 falls into Priority A (75–100 points). A sales representative should make the first personalized contact within one business day of qualification (Section 4 — Priority tiers and follow-up times).
+
+If any of the scoring factors behind that score are unclear, record the uncertainty and ask the sales manager before treating the lead as Priority A.",allsales_sales_policy_synthetic.md,4.169,773,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:28:04.408961+00:00,Q07,gemini,What is the follow-up deadline for a score of 62?,"Score 62 is Priority B, so the first personalized contact should occur within three business days of qualification.","A score of 62 falls into Priority B (50–74 points). A sales representative should make the first personalized contact within three business days of qualification. 
+
+Reference: Section 4 — Priority tiers and follow-up times",allsales_sales_policy_synthetic.md,6.101,458,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:28:12.513997+00:00,Q07,claude,What is the follow-up deadline for a score of 62?,"Score 62 is Priority B, so the first personalized contact should occur within three business days of qualification.","A score of 62 falls in Priority B (50–74 points). A sales representative should make the first personalized contact within three business days of qualification (Section 4 — Priority tiers and follow-up times).
+
+Note: if the lead record is incomplete, do not use the numeric score to override the Incomplete status (Section 3 — Lead scoring rules).",allsales_sales_policy_synthetic.md,3.434,705,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:28:17.954650+00:00,Q08,gemini,What happens to a lead scoring 48?,Score 48 is Priority C; place it in the nurture queue and review it again after 30 calendar days.,"A lead scoring 48 falls under Priority C (0–49 points). According to Section 3 — Lead scoring rules, you must add the lead to the nurture queue and schedule a new review after 30 calendar days. Do not treat a Priority C lead as an urgent sales opportunity.",allsales_sales_policy_synthetic.md,4.36,522,ok,,PASS,Called Priority C follow-up Section 3; correct section is 4. Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:29:51.079392+00:00,Q08,claude,What happens to a lead scoring 48?,Score 48 is Priority C; place it in the nurture queue and review it again after 30 calendar days.,"A lead scoring 48 is **Priority C** (0-49 points) under Section 3, Lead scoring rules. For that priority level:
+
+- The lead is added to the **nurture queue**.
+- A **new review is scheduled after 30 calendar days**.
+- The lead should **not be treated as an urgent sales opportunity**.
+
+Team routing is separate from priority scoring. Where the lead goes by region and employee count doesn't change its Priority C status. A lead located outside the EU and UK goes to the sales manager for eligibility review regardless of score.",allsales_sales_policy_synthetic.md,4.772,962,ok,,PASS,Called Priority C follow-up Section 3; correct section is 4. Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:29:57.857138+00:00,Q09,gemini,"A lead has 20 fit points, 25 urgency points, 10 authority points and 15 engagement points. What is its tier?","The total is 70 points, which is Priority B; personalized contact is due within three business days of qualification.","To determine the lead's tier, calculate the total lead score by summing the four factors:
+* Fit points: 20
+* Urgency points: 25
+* Authority points: 10
+* Engagement points: 15
+
+Total score = 20 + 25 + 10 + 15 = 70 points.
+
+According to the handbook, a score of 50–74 points falls under **Priority B**.",allsales_sales_policy_synthetic.md,18.874,608,ok,,PARTIAL,Omitted three-business-day follow-up deadline. Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:30:18.736788+00:00,Q09,claude,"A lead has 20 fit points, 25 urgency points, 10 authority points and 15 engagement points. What is its tier?","The total is 70 points, which is Priority B; personalized contact is due within three business days of qualification.","The lead's score is 20 + 25 + 10 + 15 = **70 points**, which falls in **Priority B** (50–74 points).
+
+For Priority B, a sales representative should make the first personalized contact within **three business days** of qualification.",allsales_sales_policy_synthetic.md,5.302,779,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:30:26.043652+00:00,Q10,gemini,Which sales team handles a UK business with 250 employees?,"The Enterprise Sales Team, under the UK territory owner. Priority tier still depends on its separate lead score.","According to Section 5 — Sales team routing, a business in the UK with 250 employees is routed to the Enterprise Sales Team.",allsales_sales_policy_synthetic.md,4.498,575,ok,,PARTIAL,Omitted UK territory-owner designation and independent priority score. Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:30:32.546919+00:00,Q10,claude,Which sales team handles a UK business with 250 employees?,"The Enterprise Sales Team, under the UK territory owner. Priority tier still depends on its separate lead score.","A UK business with 250 employees is routed to the **Enterprise Sales Team**. Under Section 5 (Sales team routing), leads with 201–500 employees in the EU or UK go to the Enterprise Sales Team. Region is also recorded as EU or UK so the appropriate territory owner can be assigned.
+
+Routing is separate from priority scoring. The handbook gives this exact example: a 250-employee UK business can be sent to Enterprise Sales and still hold Priority B if its score is 65.",allsales_sales_policy_synthetic.md,3.862,973,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:30:38.413551+00:00,Q11,gemini,How long does a standard product pilot last?,14 calendar days.,"A standard product pilot lasts for 14 calendar days, subject to the usual product capacity checks (Section 6).",allsales_sales_policy_synthetic.md,10.761,615,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:30:51.179420+00:00,Q11,claude,How long does a standard product pilot last?,14 calendar days.,"A standard product pilot lasts 14 calendar days, subject to the usual product capacity checks (Section 6 — Product demonstrations, pilot periods, and discounts).",allsales_sales_policy_synthetic.md,3.679,920,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:30:56.864249+00:00,Q12,gemini,Can a salesperson offer a 15% discount without permission?,No. Discounts greater than 10% require written approval from a sales manager before they are offered.,"No. A sales representative may propose a discount of up to 10% without manager approval, but any discount greater than 10% requires written approval from a sales manager before it is offered. 
+
+Source: Section 6 — Product demonstrations, pilot periods, and discounts",allsales_sales_policy_synthetic.md,10.827,570,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:32:20.300894+00:00,Q12,claude,Can a salesperson offer a 15% discount without permission?,No. Discounts greater than 10% require written approval from a sales manager before they are offered.,"No. Under Section 6 (Product demonstrations, pilot periods, and discounts), a sales representative may propose a discount of up to 10% without manager approval. Any discount greater than 10%, such as 15%, requires written approval from a sales manager before it is offered.",allsales_sales_policy_synthetic.md,3.52,876,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:32:25.826569+00:00,Q13,gemini,"How quickly should a suspected security incident be escalated, and to whom?",Send it to the Security Team on the same business day.,"A suspected security incident reported by a lead must be forwarded to the Security Team on the same business day. Do not promise that the team will resolve the issue within that period, as this timing concerns internal escalation only. 
+
+Where an urgent safety or security event is involved, Section 8 takes priority over ordinary sales response targets. 
+
+Relevant sections: Section 8 — Escalation and exceptions and Section 4 — Priority tiers and follow-up times.",allsales_sales_policy_synthetic.md,10.41,587,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:32:38.241883+00:00,Q13,claude,"How quickly should a suspected security incident be escalated, and to whom?",Send it to the Security Team on the same business day.,"**Timing:** If a lead reports a suspected security incident, forward the report to the **Security Team on the same business day**. A business day is Monday to Friday, excluding company holidays in the internal calendar.
+
+**Recipient:** The **Security Team**.
+
+**Notes:**
+- This timing is an internal escalation target only. Do not promise the lead that the Security Team will resolve the issue within any period.
+- Where an urgent safety or security event is involved, Section 8 (Escalation and exceptions) takes priority over ordinary sales response targets.",allsales_sales_policy_synthetic.md,5.976,1169,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:32:46.223628+00:00,Q14,gemini,What should we do if a business contact has opted out of marketing?,Do not send marketing campaigns to contacts marked Opted Out.,"If a business contact is marked Opted Out, do not send marketing campaigns.",allsales_sales_policy_synthetic.md,7.436,639,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:32:55.665170+00:00,Q14,claude,What should we do if a business contact has opted out of marketing?,Do not send marketing campaigns to contacts marked Opted Out.,"If a business contact is marked **Opted Out**, do not send them marketing campaigns.
+
+- Record their marketing consent status in the CRM as Opted Out. The options are Opted In, Opted Out, or Unknown.
+- Consent status is also a mandatory field in the CRM record before a lead can be qualified.
+- An Unknown status must not be treated as permission to receive marketing.
+
+The retrieved text does not give a section number for this policy. It also does not say whether non-marketing communication with an opted-out contact is allowed, so the AllSales CRM handbook does not specify that information.",allsales_sales_policy_synthetic.md,5.237,1221,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:36:03.791438+00:00,Q15,gemini,Is a company outside the UK and EU automatically rejected?,"No. Send it to the sales manager for market-eligibility review, regardless of score.","No, organizations outside the EU and UK are not automatically rejected. You must send their lead record to a sales manager for a market-eligibility review.",allsales_sales_policy_synthetic.md,6.446,622,ok,,PARTIAL,Omitted regardless-of-score detail. Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:33:07.896892+00:00,Q15,claude,Is a company outside the UK and EU automatically rejected?,"No. Send it to the sales manager for market-eligibility review, regardless of score.","No. Organizations outside the EU and UK are not automatically rejected. Their lead record is sent to a sales manager for a market-eligibility review. The handbook also states that leads located outside both regions go to the sales manager for eligibility review, regardless of score.",allsales_sales_policy_synthetic.md,3.81,969,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:33:13.712368+00:00,Q16,gemini,What is the monthly subscription price of AllSales CRM?,The handbook does not specify this information.,The AllSales CRM handbook does not specify this information.,allsales_sales_policy_synthetic.md,10.888,541,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:33:26.605954+00:00,Q16,claude,What is the monthly subscription price of AllSales CRM?,The handbook does not specify this information.,The AllSales CRM handbook does not specify this information.,allsales_sales_policy_synthetic.md,5.107,830,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:33:33.718477+00:00,Q17,gemini,Where is the AllSales CRM headquarters office located?,The handbook does not specify this information.,The AllSales CRM handbook does not specify this information.,allsales_sales_policy_synthetic.md,11.5,640,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,
+2026-11-18T16:33:47.224100+00:00,Q17,claude,Where is the AllSales CRM headquarters office located?,The handbook does not specify this information.,The AllSales CRM handbook does not specify this information.,allsales_sales_policy_synthetic.md,3.557,1014,ok,,PASS,Core policy answer correct against handbook v1.0; reviewed 18 Nov 2026.,,

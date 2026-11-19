@@ -1,0 +1,1 @@
+"""AllSales CRM application modules."""
