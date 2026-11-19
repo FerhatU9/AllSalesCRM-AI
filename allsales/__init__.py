@@ -1,1 +1,1 @@
-"""AllSales CRM portfolio application modules."""
+"""AllSales CRM application modules."""

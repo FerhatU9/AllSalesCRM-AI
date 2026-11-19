@@ -10,7 +10,7 @@ from allsales.lead_explanation import build_explanation_prompt
 
 def render_lead_form(api_url: str, headers: dict[str, str]) -> None:
     st.title("AllSales CRM | Lead Qualification")
-    st.caption("v0.8 • Fictional leads only • Rules-based decision support • No automatic CRM updates")
+    st.caption("Fictional leads only • Rules-based decision support • No automatic CRM updates")
     st.info("This form uses synthetic sample data. Do not enter real contact details. "
             "Unlike policy chat, it does not call Gemini or Claude or consume model credits.")
 

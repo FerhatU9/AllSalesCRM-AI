@@ -1,10 +1,10 @@
 # Evaluation methodology
 
-The original golden dataset contains 17 questions with expected answers. The saved historical results showed 13 exact passes, 2 partial-but-core-correct answers, and 2 incorrect answers. Therefore core-answer correctness was **15/17 (88.2%)**. LLM-as-judge scores averaged **0.941** for groundedness and **0.853** for context relevance. These are **historical** results, not performance after the latest retrieval changes.
+The original golden dataset contains 17 questions with expected answers. The saved historical results showed 13 exact passes, 2 partial-but-core-correct answers, and 2 incorrect answers. Therefore core-answer correctness was **15/17 (88.2%)**. LLM-as-judge scores averaged **0.941** for groundedness and **0.853** for context relevance. These are **historical baseline** results, not the later dual-model evaluation.
 
-## Required next experiment
+## Future validation
 
-Run all 17 questions on the current Dify configuration **without modifying prompts or knowledge midway**. Capture actual answers, error codes, response time, and document labels. Review each actual answer against `data/golden_17_questions.csv`. Use Pass / Partial / Incorrect with clearly stated criteria. If it fails due to high demand, record an API failure rather than counting it as an answer-quality success.
+The later dual-model test recorded 17 questions per model; see the [reviewed results](EVALUATION_RESULTS.md). For future runs, hold the Dify configuration fixed **without modifying prompts or knowledge midway**. Capture actual answers, error codes, response time, and document labels. Review each actual answer against `data/golden_17_questions.csv`. Use Pass / Partial / Incorrect with clearly stated criteria. If it fails due to high demand, record an API failure rather than counting it as an answer-quality success.
 
 For retrieval metrics, record whether the expected parent/child chunk appears in top-1/top-3/top-5 as a separate measurement. Note that the Dify response's source document name alone does **not** identify the exact chunk. Use Dify retrieval traces/screenshots or dedicated retrieval tests for chunk-level metrics. Don't infer citations from a source label.
 
