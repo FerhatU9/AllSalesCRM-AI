@@ -1,0 +1,28 @@
+# Local secrets — never commit credentials
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local runtime and editor artifacts
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.log
+*.sqlite
+*.db
+.coverage
+htmlcov/
+.vscode/
+.DS_Store
+
+# Private and intermediate evaluations
+results/
+results_private/
+logs/
+*_backup.py
