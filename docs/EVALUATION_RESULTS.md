@@ -32,7 +32,7 @@ All 34 **final stored results** have status `ok`, *after using a resumable scrip
 ## Fair-comparison limitations
 - Answers were collected across more than one time window and provider conditions can change.
 - Source document labels are not passage-level evidence or retrieval metrics.
-- The exact Dify workflow export, prompt version, and retrieval parameters are not in the ZIP; comparison settings cannot yet be independently verified from the repo alone.
+- Sanitized Dify workflows and retrieval configuration are now provided in `dify_exports/`. The historical published revision and fresh-workspace index have not been independently reproduced. See [reproduction guide](DIFY_REPRODUCTION.md).
 - Per-model token reporting may differ and API costs were not calculated from invoices; do not equate fewer tokens with lower cost.
 - A 17-question scripted set is limited. Add novel, adversarial, consent, boundary, and abstention cases before product release.
 

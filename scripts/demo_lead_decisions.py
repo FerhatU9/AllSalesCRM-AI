@@ -1,4 +1,4 @@
-"""Free offline demo of the v0.8 synthetic lead decision engine.
+"""Free offline demo of the synthetic lead decision engine.
 
 Run: python -m scripts.demo_lead_decisions
 """

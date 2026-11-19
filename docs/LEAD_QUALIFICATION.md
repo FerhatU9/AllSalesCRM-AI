@@ -1,4 +1,4 @@
-# v0.8 — Intelligent lead qualification and sales decision workflow
+# Lead qualification and sales decision workflow
 
 **Scope:** Educational local prototype. Company, handbook and leads are entirely fictional. The new scoring workflow is **rules-based**, rather than having an LLM guess policy decisions. Dify/Gemini/Claude are used **only when someone explicitly requests a policy explanation**.
 
@@ -73,7 +73,7 @@ The test suite verifies boundaries, missing data, scoring, routing, consent, dis
 - Not an actual CRM integration: no persistent lead storage, task scheduling, sales notifications, user accounts or approvals.
 - Country and email checks are demonstration-level. Do not use real customer details.
 - The AI explanation is non-authoritative and must be checked against the actual handbook.
-- The v0.8 Streamlit interface and backend were verified in a local browser session on **19 November 2026** for the five scenarios listed in [the live UI validation report](LIVE_UI_VALIDATION_2026-11-19.md). This is a single local demonstration, not a fresh-workspace reproducibility or production deployment test.
+- The Streamlit interface and backend were verified in a local browser session on **19 November 2026** for the five scenarios listed in [the live UI validation report](LOCAL_VALIDATION.md). This is a single local demonstration, not a fresh-workspace reproducibility or production deployment test.
 - Future commercial requirements: real authentication/RBAC, audit trail, regulatory/privacy review, approved CRM data access, time-zone/company-calendar integration, and human approval workflow.
 
 For a quick demonstration without either server or any model credits:

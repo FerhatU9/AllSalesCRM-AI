@@ -1,23 +1,23 @@
 # AllSales CRM AI — Dual-Model RAG + Intelligent Lead Decisions
 
-**GitHub-ready local portfolio prototype (v0.8), not a production CRM service.**  
+**Local development prototype — not a production CRM service.**  
 All company data and rules in this repository are **synthetic**. The app answers fictional sales-policy questions and now evaluates **synthetic lead records** with deterministic scoring, routing, follow-up and approval rules. It does not access or change a real CRM.
 
 ## Evidence and current status
 
 - Working policy assistant path, tested manually on 18 November 2026: **Streamlit → FastAPI → two Dify Chatflows → Gemini Flash-Lite / Claude Sonnet 5.5**.
-- **v0.8 manual browser verification (19 November 2026):** normal 85-point qualification, missing employee count, 15% discount requiring written approval, security-first escalation, and successful optional Claude explanation. The explanation is advisory, not independently verified; see [validation record](docs/LIVE_UI_VALIDATION_2026-11-19.md).
-- Offline suite: **66 tests passed** in the v0.8 source package (no LLM requests).
+- **Local browser verification (19 November 2026):** normal 85-point qualification, missing employee count, 15% discount requiring written approval, security-first escalation, and successful optional Claude explanation. The explanation is advisory, not independently verified; see [validation record](docs/LOCAL_VALIDATION.md).
+- Offline suite: **66 tests passed** in the tested source package (no LLM requests).
 - Dual-model evaluation: **17 curated questions × 2 models**; 34 successful final answers after retries. Manual review: all **34 core answers correct**, but Gemini omitted expected detail in **3 of 17** answers and several answers misidentified handbook section numbers. See [evaluation report](docs/EVALUATION_RESULTS.md) and [reviewed dataset](data/evaluation_34_reviewed.csv).
 - Opt-in model fallback for recognized transient errors is covered by unit tests; a real failure-triggered live fallback has **not** been demonstrated.
 - Both sanitized Dify Chatflow packages are included in [`dify_exports/`](dify_exports/), with documented model/prompt/retrieval settings. A new workspace must **rebuild and re-link the external knowledge base**; a fresh-workspace import/live run has not been independently verified. See [Dify reproduction guide](docs/DIFY_REPRODUCTION.md).
 - **Not production-ready:** shared local token is not user login, and there is no RBAC, tenant isolation, rate limiting, approved CRM integration, or operational monitoring.
 
-## New in v0.8 — Lead qualification workflow
+## Lead qualification workflow
 
 Use **Workspace → Lead qualification** in Streamlit. Enter a synthetic CRM lead, then select **Evaluate fictional lead**. A new FastAPI endpoint (`POST /v1/leads/evaluate`) applies the original handbook rules **without an LLM call** and returns a transparent score breakdown, priority only when qualified, proposed sales-team routing, follow-up targets, discount/consent safeguards, and security escalation instructions. No CRM records are saved or updated.
 
-The optional **Gemini/Claude policy explanation** is a separate, explicitly requested model call. It sends only derived policy facts (not company/contact names or email), cannot override the score, and can consume model credits. See [full v0.8 workflow guide](docs/LEAD_QUALIFICATION_V08.md).
+The optional **Gemini/Claude policy explanation** is a separate, explicitly requested model call. It sends only derived policy facts (not company/contact names or email), cannot override the score, and can consume model credits. See the [lead qualification guide](docs/LEAD_QUALIFICATION.md).
 
 ### Example lead decision
 
@@ -48,7 +48,7 @@ flowchart TD
     C --> B
 ```
 
-The `docs/architecture.png` file was created for the **earlier Gemini-only coursework**; the diagram above reflects the current local code. Dify retains the RAG workflow and shared knowledge-base configuration outside this repository. `source_documents` identifies **document labels**, not verified passage-level citations.
+The diagram above reflects the current local code. Dify retains the RAG workflow and shared knowledge-base configuration outside this repository. `source_documents` identifies **document labels**, not verified passage-level citations.
 
 ## Reproduce on Windows (PowerShell)
 
@@ -122,8 +122,16 @@ When deliberately running new live tests, prefer controlled batches and `--resum
 - `scripts/` — offline lead demo, evaluation utilities and controlled live collectors
 - `tests/` — 66 offline tests (including lead-rule boundaries, missing fields, auth and fallback)
 - `dify_exports/` — Gemini and Claude sanitized Dify app packages (workspace dataset ID removed)
-- `docs/` — limitations, workflow audit, engineering roadmap and reproduction instructions
+- `docs/` — setup, validation evidence, model review and engineering guidance
 
-**Portfolio label:** Local two-model RAG assistant with deterministic lead qualification and an opt-in AI policy-explanation step; not production SaaS.
+## Project status and documentation
 
-**Portfolio approval:** [v0.7 readiness assessment](docs/PORTFOLIO_READINESS_2026-11-18.md) · [Dify workflow audit](docs/WORKFLOW_EXPORT_AUDIT.md). Approval is for a **local educational project** only; production security, real CRM deployment, and independent fresh-workspace verification remain out of scope.
+This project is a local educational prototype based on fictional sales policies and leads. It does not connect to a real CRM, and the shared development token is not a production user authentication system.
+
+- [Project status and limitations](docs/PROJECT_STATUS.md)
+- [Lead qualification](docs/LEAD_QUALIFICATION.md)
+- [Local validation](docs/LOCAL_VALIDATION.md)
+- [Evaluation results](docs/EVALUATION_RESULTS.md)
+- [Dify workflow review](docs/DIFY_WORKFLOW_REVIEW.md) and [setup](docs/DIFY_REPRODUCTION.md)
+- [Reliability and fallback](docs/RELIABILITY.md)
+- [Production development plan](docs/PRODUCTION_PLAN.md)

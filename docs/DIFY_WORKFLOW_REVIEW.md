@@ -1,4 +1,4 @@
-# Dify workflow export audit — 18 November 2026
+# Dify workflow export review
 
 ## Scope
 
@@ -25,4 +25,4 @@ Reviewed the two `.ifpkg` files uploaded from Dify Studio (Gemini and Claude), e
 
 The original files were preserved untouched outside the repository. To avoid publishing a workspace-specific knowledge-base identifier, the public `.ifpkg` files set `dataset_ids: []` on the retrieval node. All other workflow YAML bytes were preserved. `manifest.yaml` hashes and sizes were updated accordingly. After import, **rebind the synthetic handbook knowledge base** in both nodes before attempting queries.
 
-**Finding:** Workflow-export evidence is now sufficient for a *documented local portfolio prototype*, but not proof of independently reproduced or production-ready deployment.
+**Finding:** Workflow-export evidence is now sufficient for a *documented local prototype*, but not proof of independently reproduced or production-ready deployment.

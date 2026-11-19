@@ -36,7 +36,7 @@ class ChatResponse(BaseModel):
     source_documents: list[str]
     total_tokens: int | None = None
     model: Literal["gemini", "claude"]
-    # Only included in JSON when fallback occurs; preserves v0.3 responses.
+    # Only included in JSON when fallback occurs; preserves existing response structure.
     requested_model: Literal["gemini", "claude"] | None = None
     fallback_used: bool | None = None
 

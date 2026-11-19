@@ -1,4 +1,4 @@
-# AllSales CRM AI — Production roadmap (revised 18 November 2026)
+# AllSales CRM AI — Production development plan
 
 ## Product vision
 A real B2B sales-operations assistant: trustworthy internal policy Q&A, permission-aware document
@@ -17,7 +17,7 @@ then abstract orchestration behind the FastAPI service. After the first comparat
 add a hands-on direct Anthropic Python SDK exercise and a testable model adapter so we
 understand both the low-code Dify integration and provider-level API engineering.
 
-## Release milestones and hard gates
+## Development milestones and verification gates
 
 ### Milestone 0 — Preserve and reproduce existing baseline
 - Existing Dify Gemini workflow preserved and exported (workflow definition, KB recipe, model settings).
@@ -66,13 +66,11 @@ understand both the low-code Dify integration and provider-level API engineering
 - Conduct structured pilot and measure task resolution, failures, trust, and maintenance burden.
 **Exit gate:** documented customer sign-off and sustainable operations before broader sales.
 
-## Current milestone (18 November 2026)
-Milestone 1's live Gemini and Claude integration was demonstrated through Dify/Streamlit on the
-owner's machine. A 17-question dual-model result collection and manual review have been completed,
-with limitations recorded in `docs/EVALUATION_RESULTS.md`. Local tests pass, but the Dify workflows
-and exact knowledge index settings have not yet been exported for reproduction (see
-`docs/DIFY_REPRODUCTION.md`). Milestones 2's expanded adversarial coverage and passage-level citation
-goals are not complete. This is a **local portfolio prototype candidate**, NOT secured SaaS.
+## Current implementation (19 November 2026)
+
+The local Streamlit/FastAPI integration with Gemini and Claude through Dify was demonstrated, along with deterministic lead scoring and an optional policy explanation. Both sanitized Dify exports and the synthetic handbook are included, but fresh-workspace knowledge indexing has not been reproduced.
+
+The earlier source package recorded 66 passing offline tests, 34 reviewed final model responses and five documented local UI scenarios. Further adversarial testing, passage-level citations, secure authentication, real CRM actions and production deployment remain incomplete.
 
 ## Scope boundaries
 For the first pilot, avoid storing real customer private data and don't build autonomous high-impact actions.
