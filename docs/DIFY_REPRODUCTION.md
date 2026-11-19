@@ -1,6 +1,6 @@
 # Reproduce the Gemini and Claude Dify Chatflows
 
-**Status (18 November 2026):** Both workflows have been exported and examined. `dify_exports/` now contains GitHub-safe `.ifpkg` packages with valid SHA-256 manifests. The original uploaded exports were unmodified; the published copies have **only** the original workspace-specific knowledge-base ID removed. You must re-link the dataset after import.
+**Status:** Both workflows have been exported and examined. `dify_exports/` now contains GitHub-safe `.ifpkg` packages with valid SHA-256 manifests. The original uploaded exports were unmodified; the published copies have **only** the original workspace-specific knowledge-base ID removed. You must re-link the dataset after import.
 
 ## 1. What the workflow packages contain
 
@@ -47,6 +47,6 @@ The system prompt is exactly the same in both exported workflows. It instructs t
 
 ## 4. Reproduction limitations and comparison fairness
 
-The successful test results in `data/evaluation_34_reviewed.csv` came from the owner's existing Dify workspace on 18 November 2026. The imported public packages have **not** been live-tested in a different Dify workspace, and knowledge retrieval is external to the package. The evaluated models and prompt/retrieval configurations are consistent with the exports, but export alone cannot independently prove the historical published workflow revision. Differences in indexing or provider-model versions may change results.
+The successful test results in `data/evaluation_34_reviewed.csv` came from the owner's existing Dify workspace. The imported public packages have **not** been live-tested in a different Dify workspace, and knowledge retrieval is external to the package. The evaluated models and prompt/retrieval configurations are consistent with the exports, but export alone cannot independently prove the historical published workflow revision. Differences in indexing or provider-model versions may change results.
 
 Do not publish original app keys, provider credentials, private environment files, or real customers' data. This project uses a **fictional sales-policy handbook** and is suitable only as a local learning/portfolio prototype.

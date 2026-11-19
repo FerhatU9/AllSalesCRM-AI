@@ -1,6 +1,5 @@
 # Local interface validation
 
-**Date:** 19 November 2026  
 **Evidence:** user-supplied screenshots from the working local Streamlit application (FastAPI on localhost).  
 **Scope:** five user-executed scenarios using entirely synthetic CRM data. Screenshot observations only; this is not a fresh-install test, penetration test, or performance benchmark.
 
