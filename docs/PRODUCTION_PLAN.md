@@ -66,7 +66,7 @@ understand both the low-code Dify integration and provider-level API engineering
 - Conduct structured pilot and measure task resolution, failures, trust, and maintenance burden.
 **Exit gate:** documented customer sign-off and sustainable operations before broader sales.
 
-## Current implementation (19 November 2026)
+## Current implementation
 
 The local Streamlit/FastAPI integration with Gemini and Claude through Dify was demonstrated, along with deterministic lead scoring and an optional policy explanation. Both sanitized Dify exports and the synthetic handbook are included, but fresh-workspace knowledge indexing has not been reproduced.
 

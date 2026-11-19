@@ -5,8 +5,8 @@ All company data and rules in this repository are **synthetic**. The app answers
 
 ## Evidence and current status
 
-- Working policy assistant path, tested manually on 18 November 2026: **Streamlit → FastAPI → two Dify Chatflows → Gemini Flash-Lite / Claude Sonnet 5.5**.
-- **Local browser verification (19 November 2026):** normal 85-point qualification, missing employee count, 15% discount requiring written approval, security-first escalation, and successful optional Claude explanation. The explanation is advisory, not independently verified; see [validation record](docs/LOCAL_VALIDATION.md).
+- Working policy assistant path, verified manually: **Streamlit → FastAPI → two Dify Chatflows → Gemini Flash-Lite / Claude Sonnet 5.5**.
+- **Local browser verification:** normal 85-point qualification, missing employee count, 15% discount requiring written approval, security-first escalation, and successful optional Claude explanation. The explanation is advisory, not independently verified; see [validation record](docs/LOCAL_VALIDATION.md).
 - Offline suite: **66 tests passed** in the tested source package (no LLM requests).
 - Dual-model evaluation: **17 curated questions × 2 models**; 34 successful final answers after retries. Manual review: all **34 core answers correct**, but Gemini omitted expected detail in **3 of 17** answers and several answers misidentified handbook section numbers. See [evaluation report](docs/EVALUATION_RESULTS.md) and [reviewed dataset](data/evaluation_34_reviewed.csv).
 - Opt-in model fallback for recognized transient errors is covered by unit tests; a real failure-triggered live fallback has **not** been demonstrated.

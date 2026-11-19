@@ -1,4 +1,4 @@
-# Dual-model RAG evaluation — reviewed 18 November 2026
+# Dual-model RAG evaluation
 
 This report analyses **17 curated synthetic-handbook questions per model**, captured via the Dify service from an existing development workspace. It is **not a benchmark on unseen user traffic** or proof of production reliability.
 

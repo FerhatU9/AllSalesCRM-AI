@@ -70,7 +70,7 @@ class LeadDecision(BaseModel):
     actions: list[Action]
     explanations: list[str]
     source_sections: list[str]
-    policy_version: str = "Synthetic handbook v1.0 (1 October 2026)"
+    policy_version: str = "Synthetic handbook v1.0"
     automated_actions_taken: int = 0
 
 

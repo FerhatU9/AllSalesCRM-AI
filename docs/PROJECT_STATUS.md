@@ -1,6 +1,5 @@
 # Project status and limitations
 
-**Reviewed:** 19 November 2026  
 **Scope:** Local development prototype using synthetic sales policies and fictional CRM leads.
 
 ## Implemented
@@ -15,7 +14,7 @@
 
 - **66 offline tests passed** in the previously validated source package.
 - **34 final model responses** across 17 questions per model, collected after retries. All essential policy answers were manually marked correct, with disclosed omissions and section-number issues.
-- **Five local UI scenarios** were documented on 19 November 2026.
+- **Five local UI scenarios** were documented in the local validation report.
 
 See [evaluation results](EVALUATION_RESULTS.md) and [local validation](LOCAL_VALIDATION.md) for methodology and limitations.
 
