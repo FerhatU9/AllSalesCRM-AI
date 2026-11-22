@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { addLead, updateLeadStatus } from "@/app/workspace/actions";
-import { listLeads, listOrganizations, BackendError } from "@/lib/backend";
+import { listLeads, listOrganizations, BackendError, type Lead } from "@/lib/backend";
 import { notFound } from "next/navigation";
 
 type Props = {
@@ -20,7 +20,7 @@ export default async function OrganizationWorkspace({params,searchParams}:Props)
   const organizations = await listOrganizations().catch(() => []);
   const org = organizations.find(o => o.id === orgId);
   if (!org) notFound();
-  let leads;
+  let leads: Lead[] = [];
   let error:string|null = null;
   try {
     leads = await listLeads(orgId);
