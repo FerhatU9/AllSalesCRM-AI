@@ -16,7 +16,8 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "lead_audit_events",
-        sa.Column("id", sa.Uuid(), primary_key=True, nullable=False),
+        sa.Column("sequence", sa.Integer(), primary_key=True, autoincrement=True, nullable=False),
+        sa.Column("id", sa.Uuid(), unique=True, nullable=False),
         sa.Column(
             "organization_id", sa.Uuid(),
             sa.ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
@@ -41,7 +42,7 @@ def upgrade() -> None:
     )
     op.create_index(
         "ix_lead_audit_org_lead", "lead_audit_events",
-        ["organization_id", "lead_id", "occurred_at"],
+        ["organization_id", "lead_id", "sequence"],
     )
 
 
