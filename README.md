@@ -1,60 +1,70 @@
-# AllSales CRM AI — Dual-Model RAG + Intelligent Lead Decisions
+# AllSales CRM AI
 
-**Local development prototype — not a production CRM service.**  
-All company data and rules in this repository are **synthetic**. The app answers fictional sales-policy questions and now evaluates **synthetic lead records** with deterministic scoring, routing, follow-up and approval rules. It does not access or change a real CRM.
+**Sales-policy intelligence and rule-based lead qualification, built with Python, FastAPI, Streamlit, Dify, Gemini and Claude.**
 
-## Evidence and current status
+AllSales CRM AI explores how a sales team could retrieve answers from approved policy documents, assess leads consistently, and manage organization-scoped lead records. It combines AI-assisted policy answers with deterministic Python decision rules so the language model does not determine sales scores or authorize actions.
 
-- Working policy assistant path, verified manually: **Streamlit → FastAPI → two Dify Chatflows → Gemini Flash-Lite / Claude Sonnet 5.5**.
-- **Local browser verification:** normal 85-point qualification, missing employee count, 15% discount requiring written approval, security-first escalation, and successful optional Claude explanation. The explanation is advisory, not independently verified; see [validation record](docs/LOCAL_VALIDATION.md).
-- Offline suite: **66 tests passed** in the tested source package (no LLM requests).
-- Dual-model evaluation: **17 curated questions × 2 models**; 34 successful final answers after retries. Manual review: all **34 core answers correct**, but Gemini omitted expected detail in **3 of 17** answers and several answers misidentified handbook section numbers. See [evaluation report](docs/EVALUATION_RESULTS.md) and [reviewed dataset](data/evaluation_34_reviewed.csv).
-- Opt-in model fallback for recognized transient errors is covered by unit tests; a real failure-triggered live fallback has **not** been demonstrated.
-- Both sanitized Dify Chatflow packages are included in [`dify_exports/`](dify_exports/), with documented model/prompt/retrieval settings. A new workspace must **rebuild and re-link the external knowledge base**; a fresh-workspace import/live run has not been independently verified. See [Dify reproduction guide](docs/DIFY_REPRODUCTION.md).
-- **Not production-ready:** shared local token is not user login, and there is no RBAC, tenant isolation, rate limiting, approved CRM integration, or operational monitoring.
+> **Project status: local development prototype.** This repository uses a fictional company, a synthetic policy handbook and sample leads. The code is publicly available, but the application is **not** a deployed service, a complete CRM, or approved for real customer data.
 
-## Lead qualification workflow
+## At a glance
 
-Use **Workspace → Lead qualification** in Streamlit. Enter a synthetic CRM lead, then select **Evaluate fictional lead**. A new FastAPI endpoint (`POST /v1/leads/evaluate`) applies the original handbook rules **without an LLM call** and returns a transparent score breakdown, priority only when qualified, proposed sales-team routing, follow-up targets, discount/consent safeguards, and security escalation instructions. No CRM records are saved or updated.
+| Capability | Implemented | Boundary |
+| --- | --- | --- |
+| Sales-policy Q&A | Gemini and Claude through separate Dify Chatflows | Requires externally configured Dify knowledge and API keys |
+| Lead qualification | Deterministic scoring, priority, team routing, follow-up and escalation | Local Streamlit demo; recommendations only |
+| AI explanations | Optional model-generated explanation of derived lead decisions | Advisory; does not override Python scoring |
+| Account identity | OIDC access-token verification and organization membership lookup | No customer login or onboarding UI yet |
+| Lead record API | Create, list, read and update organization-scoped synthetic records | Separate API; not integrated into Streamlit |
+| Quality checks | Automated Python tests, model evaluation and UI scenario records | Not a production security or reliability certification |
 
-The optional **Gemini/Claude policy explanation** is a separate, explicitly requested model call. It sends only derived policy facts (not company/contact names or email), cannot override the score, and can consume model credits. See the [lead qualification guide](docs/LEAD_QUALIFICATION.md).
+## How it works
 
-### Example lead decision
-
-An EU SaaS company with 120 employees, decision within 20 days, final budget authority, no recorded engagement, and a complete synthetic CRM record scores **85/100 → Priority A → SMB Sales Team → first personalized contact within one business day**. Incomplete fields must be resolved before a priority tier is assigned.
-
-## Architecture (current version)
+AllSales CRM AI currently has **two distinct development paths**:
 
 ```mermaid
 flowchart TD
-    A[Sales user] --> B[Streamlit local UI]
-    B --> C[FastAPI local backend]
-    B --> J[Lead qualification form]
-    J --> M[FastAPI lead evaluate endpoint]
-    M --> N[Python rules engine - handbook v1.0]
-    N --> O[Score, route, action, approval recommendations]
-    O --> J
-    C --> D{Requested model}
-    D --> E[Dify Gemini Chatflow]
-    D --> F[Dify Claude Chatflow]
-    E --> G[Gemini Flash-Lite]
-    F --> H[Claude Sonnet]
-    K[Synthetic policy handbook] --> L[Dify Knowledge Retrieval]
-    L --> E
-    L --> F
-    E --> I[Answer and document labels]
-    F --> I
-    I --> C
-    C --> B
+    A[Local Streamlit interface] --> B[FastAPI demo endpoints]
+    B --> C[Sales-policy chat]
+    B --> D[Lead qualification]
+    C --> E[Gemini or Claude via Dify]
+    K[Synthetic handbook in Dify knowledge base] --> E
+    D --> F[Deterministic Python rules]
+    E --> G[Policy answer and document labels]
+    F --> H[Score, routing and recommendations]
+
+    I[API client with verified OIDC access token] --> J[Authenticated FastAPI endpoints]
+    J --> L[Organization membership and role checks]
+    L --> M[Organization-scoped lead records]
+    M --> N[(SQLAlchemy / database)]
 ```
 
-The diagram above reflects the current local code. Dify retains the RAG workflow and shared knowledge-base configuration outside this repository. `source_documents` identifies **document labels**, not verified passage-level citations.
+The Streamlit demo uses a **shared local development token**. The separate account and lead-record API uses verified OIDC identities and organization membership checks. These paths are **not yet a unified customer login experience**. Dify returns document labels, not verified passage-level citations.
 
-## Reproduce on Windows (PowerShell)
+### Lead qualification example
 
-Prerequisites: Python 3.11+, a Dify workspace, Gemini and Anthropic model-provider credentials configured inside Dify, and the shared synthetic handbook indexed in a new Dify knowledge base. **Import the two included sanitized `.ifpkg` workflows and rebind that knowledge base** as described in the [Dify reproduction guide](docs/DIFY_REPRODUCTION.md).
+A fictional EU SaaS company with 120 employees, a purchase decision expected within 20 days, final budget authority and no recorded engagement receives:
 
-From **the folder that contains `app.py`**:
+- **Score:** 85/100 — Priority A
+- **Routing:** SMB Sales Team
+- **Recommended first contact:** Within one business day
+
+Missing mandatory fields prevent a final priority tier. Discount approvals and security incidents generate human-review or escalation recommendations; the application does not grant approval or contact customers.
+
+### Local interface preview
+
+![AllSales CRM lead qualification demo showing a manager approval scenario](docs/screenshots/discount_approval.png)
+
+*Screenshot from a synthetic local demonstration. The interface does not perform real CRM updates.*
+
+See [lead qualification details](docs/LEAD_QUALIFICATION.md) and [local scenario evidence](docs/LOCAL_VALIDATION.md).
+
+## Run the local demo
+
+The instructions below target **Windows PowerShell** and a local Python installation. They do not deploy a public service.
+
+**Requirements:** Python 3.11 or 3.12. Policy Q&A also needs a Dify workspace with the model providers configured, the included synthetic handbook indexed, and both sanitized Chatflows imported and re-linked. Follow the [Dify setup guide](docs/DIFY_REPRODUCTION.md).
+
+From the repository root:
 
 ```powershell
 py -m venv .venv
@@ -64,86 +74,75 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-Set the generated token as `API_APP_TOKEN` (replace the placeholder), insert the two **Dify app keys** in `DIFY_GEMINI_API_KEY` and `DIFY_CLAUDE_API_KEY`, then save `.env`. Never commit it. Keep the model-provider keys inside Dify settings, not in this repo.
+In `.env`, replace the placeholder `API_APP_TOKEN` with the newly generated token. For policy Q&A, add the **Dify application keys** to `DIFY_GEMINI_API_KEY` and `DIFY_CLAUDE_API_KEY`. Keep provider credentials in Dify itself. Never commit `.env`.
+
+Verify the offline test suite:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-In terminal 1 (leave running):
+Open two terminals in the repository root:
 
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn backend.api:app --host 127.0.0.1 --port 8000
-```
+| Terminal 1 — FastAPI | Terminal 2 — Streamlit |
+| --- | --- |
+| `.\.venv\Scripts\python.exe -m uvicorn backend.api:app --host 127.0.0.1 --port 8000` | `.\.venv\Scripts\python.exe -m streamlit run app.py` |
 
-In terminal 2 (leave running):
+Open **http://127.0.0.1:8501**. Choose **Policy assistant** for Dify-backed Q&A, or **Lead qualification** for the local rules-based example.
 
-```powershell
-.\.venv\Scripts\python.exe -m streamlit run app.py
-```
+A Docker Compose setup is also available for local development: [container guide](docs/CONTAINERS.md). **The Docker workflow has not been independently verified on a clean machine.** Its exposed ports are loopback-only by design.
 
-Open `http://localhost:8501`; select **Policy assistant** to chat with Gemini or Claude, or **Lead qualification** to evaluate a fictional sales lead with no LLM charges. The API documentation is visible locally at `http://127.0.0.1:8000/docs` and a process-only health check is `/health`. **Do not expose either service to the public Internet.**
+### Database and authenticated lead API
 
-## Evaluation without unnecessary costs
+The organization-scoped lead API is **separate from the Streamlit demo**. It requires:
 
-Offline preview (no API calls):
+1. A development database configured with `DATABASE_URL` and Alembic migrations applied.
+2. An explicitly configured OIDC issuer, API audience and HTTPS JWKS URL.
+3. Provider-issued RS256 access tokens and provisioned organization memberships.
 
-```powershell
-.\.venv\Scripts\python.exe -m scripts.compare_models --limit 3
-```
+The API offers organization listing plus lead list/create/read/update endpoints, with role checks and organization-scoped queries. It does **not** offer public self-registration, invitation management or a customer login interface. See [identity/database setup](docs/IDENTITY_AND_DATABASE.md) and [lead API reference](docs/LEAD_STORAGE.md).
 
-When deliberately running new live tests, prefer controlled batches and `--resume` to preserve successful results; live calls can consume model credits:
+## Testing and evidence
 
-```powershell
-.\.venv\Scripts\python.exe -m scripts.compare_models --live --resume --limit 17 --max-new-calls 1
-```
+| Evidence | What it supports |
+| --- | --- |
+| Python tests and GitHub Actions | Offline checks on Python 3.11 and 3.12; includes rule boundaries, OIDC checks and organization-isolation cases |
+| Dual-model evaluation | 17 curated handbook questions per model; all 34 stored final answers had correct essential policy facts in manual review |
+| Completeness review | Gemini supplied all expected details in 14/17 answers; Claude in 17/17, with noted section-reference errors |
+| Local UI scenarios | Five documented synthetic scenarios, including missing input, discount review, escalation and optional explanation |
+| Sanitized Dify exports | Inspectable workflow definitions; the knowledge index and a new-workspace live reproduction remain unverified |
 
-`--resume` requires an existing local `results/dual_model_answers.csv` and **does not auto-grade correctness**. See [evaluation methodology](docs/EVALUATION.md). A public reviewed snapshot is provided in `data/evaluation_34_reviewed.csv`, while working results in `results/` are intentionally gitignored.
+The evaluation uses a small, curated set and includes successful responses saved **after retries**. It is not evidence of first-attempt model reliability or general accuracy. The current automated test count should be taken from the latest CI run rather than the historical baseline.
 
-## Scope and safeguards
+Read the [evaluation report](docs/EVALUATION_RESULTS.md), [reviewed responses](data/evaluation_34_reviewed.csv) and [Dify workflow review](docs/DIFY_WORKFLOW_REVIEW.md).
 
-- **No real personal/customer records.** The handbook is fictional training material.
-- A single shared development API token is **not production authentication**. No public deployment or claims of multi-tenant security.
-- Model fallback is **off by default** and must be explicitly opted into; fallback creates a separate Dify conversation and the UI labels it.
-- Dify credentials and handbook indexing remain external to Git. Both workflows and their retrieval settings are documented, but imported packages require re-linking the synthetic knowledge base and cannot guarantee identical results without matching indexing/model versions.
-- For true production requirements, see [production plan](docs/PRODUCTION_PLAN.md).
+## Repository structure
 
-## Repository guide
+| Path | Purpose |
+| --- | --- |
+| `app.py` and `allsales/lead_ui.py` | Local Streamlit policy assistant and qualification interface |
+| `backend/api.py` and `backend/lead_routes.py` | Demo endpoints and separate authenticated lead APIs |
+| `allsales/` | Dify client, scoring, identity verification, database models and helpers |
+| `migrations/` | Alembic database schema migrations |
+| `knowledge/` and `dify_exports/` | Synthetic handbook and sanitized Gemini/Claude workflows |
+| `data/`, `scripts/` and `tests/` | Evaluation records, reproducible scripts and automated tests |
+| `docs/` | Architecture, setup, verification evidence and planned work |
+| `Dockerfile` and `compose.yaml` | Local-only container setup |
 
-- `app.py` — Streamlit local UI with two workspaces
-- `backend/api.py` — FastAPI interface, validation, model selection and new lead decision endpoint
-- `allsales/dify_client.py` — Dify HTTP client and error handling
-- `allsales/lead_qualification.py` — deterministic lead scoring, qualification, routing and escalation
-- `allsales/lead_ui.py` — lead form, report and optional AI explanation
-- `allsales/lead_explanation.py` — minimum-data policy explanation prompt
-- `knowledge/` — synthetic sales-policy handbook
-- `data/golden_17_questions.csv` — evaluation questions with expected policy facts
-- `data/evaluation_34_reviewed.csv` — manually reviewed model outputs (no real customers)
-- `scripts/` — offline lead demo, evaluation utilities and controlled live collectors
-- `tests/` — automated offline tests (including scoring boundaries, organization isolation, missing fields, authentication and fallback)
-- `dify_exports/` — Gemini and Claude sanitized Dify app packages (workspace dataset ID removed)
-- `docs/` — setup, validation evidence, model review and engineering guidance
+## Roadmap to a usable product
 
-## Development and commercial direction
+The intended first commercial milestone is a **controlled pilot for one consenting business**, followed by broader rollout only after the required security and operational checks.
 
-The application is **local-only**. It cannot be operated as a public customer-facing service in its current form. Runtime startup rejects nonlocal `ALLSALES_ENV` modes as a safety measure, not as a substitute for production security.
+- **Identity and onboarding:** Real browser login, token lifecycle, organization invitations and provisioning.
+- **Secure company workspaces:** Extend authorization to the entire application and knowledge retrieval; add database-level isolation and audit trails.
+- **Operational workflows:** Approved CRM integrations, human authorization before writes, error handling and recovery.
+- **Reliable AI:** Passage-level citations, expanded evaluation, provider cost tracking and failure monitoring.
+- **Deployment and compliance:** Managed infrastructure, HTTPS, secret management, data retention/deletion, backups, load testing and security review.
 
-- [Run both services with Docker Compose on your own computer](docs/CONTAINERS.md)
-- [Commercial architecture, priorities, and acceptance criteria](docs/COMMERCIAL_ARCHITECTURE.md)
-- [Security scope and reporting](SECURITY.md)
-- [Identity and database foundation](docs/IDENTITY_AND_DATABASE.md)
-- [Organization-scoped synthetic lead API](docs/LEAD_STORAGE.md)
+The existing local-only startup restriction must stay in place until the complete security and deployment gates have been met.
 
-Do not put real customers' personal information into this prototype. Each commercially deployable capability will need its own tested implementation, review, and Git commit.
+See the [commercial architecture plan](docs/COMMERCIAL_ARCHITECTURE.md), [production development plan](docs/PRODUCTION_PLAN.md), and [security policy](SECURITY.md).
 
-## Project status and documentation
+---
 
-This project is a local educational prototype based on fictional sales policies and leads. It does not connect to a real CRM, and the shared development token is not a production user authentication system.
-
-- [Project status and limitations](docs/PROJECT_STATUS.md)
-- [Lead qualification](docs/LEAD_QUALIFICATION.md)
-- [Local validation](docs/LOCAL_VALIDATION.md)
-- [Evaluation results](docs/EVALUATION_RESULTS.md)
-- [Dify workflow review](docs/DIFY_WORKFLOW_REVIEW.md) and [setup](docs/DIFY_REPRODUCTION.md)
-- [Reliability and fallback](docs/RELIABILITY.md)
-- [Production development plan](docs/PRODUCTION_PLAN.md)
+**Important:** This is a software development project using fictional data. No real CRM integration, customer-data processing, automatic discount approval or public SaaS availability is claimed.
