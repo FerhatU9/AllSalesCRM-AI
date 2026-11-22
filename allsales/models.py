@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, String, UniqueConstraint, Uuid, select
+from sqlalchemy import JSON, CheckConstraint, DateTime, ForeignKey, Index, String, UniqueConstraint, Uuid, func, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 
@@ -73,6 +74,39 @@ class LeadRecord(Base):
     company_name: Mapped[str] = mapped_column(String(160), nullable=False)
     summary: Mapped[str] = mapped_column(String(500), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="new")
+
+
+
+class LeadAuditEvent(Base):
+    """Database-backed activity history for synthetic leads.
+
+    Capture verified actor identity, affected fields and status changes.
+    Do not store names, summaries, tokens or policy text in this table.
+    """
+
+    __tablename__ = "lead_audit_events"
+    __table_args__ = (
+        CheckConstraint("action IN ('created', 'updated')", name="ck_lead_audit_action"),
+        Index("ix_lead_audit_org_lead", "organization_id", "lead_id", "occurred_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+    )
+    lead_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("leads.id", ondelete="RESTRICT"), nullable=False
+    )
+    actor_identity_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("identities.id", ondelete="RESTRICT"), nullable=False
+    )
+    action: Mapped[str] = mapped_column(String(16), nullable=False)
+    changed_fields: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    previous_status: Mapped[str | None] = mapped_column(String(16))
+    new_status: Mapped[str | None] = mapped_column(String(16))
+    occurred_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 def find_membership(
