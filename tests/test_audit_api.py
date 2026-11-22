@@ -112,11 +112,12 @@ def test_audit_insert_failure_rolls_back_lead_creation(setup_audit):
             raise RuntimeError("Simulated failure before audit persistence")
 
     try:
-        with pytest.raises(RuntimeError, match="Simulated failure"):
-            client.post(
-                f"/v1/organizations/{org_a}/leads",
-                json={"company_name": "Rollback Test", "summary": "Synthetic"},
-            )
+        response = client.post(
+            f"/v1/organizations/{org_a}/leads",
+            json={"company_name": "Rollback Test", "summary": "Synthetic"},
+        )
+        assert response.status_code == 503
+        assert response.json()["detail"] == "Account database unavailable"
     finally:
         event.remove(Session, "before_flush", fail_if_audit_insert)
 
