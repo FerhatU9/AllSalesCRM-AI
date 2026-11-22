@@ -50,6 +50,7 @@ def provision_demo_workspace(
         raise ValueError("Enter an exact nonempty Auth0 subject without whitespace")
 
     org = session.scalar(select(Organization).where(Organization.slug == slug))
+    existing_org = org is not None
     if org is None:
         org = Organization(slug=slug, display_name=display_name.strip())
         session.add(org)
@@ -65,6 +66,8 @@ def provision_demo_workspace(
 
     membership = session.get(Membership, (org.id, identity.id))
     if membership is None:
+        if existing_org:
+            raise ValueError("Existing organization cannot be assigned to a new identity")
         session.add(Membership(organization_id=org.id, identity_id=identity.id, role="owner"))
         session.flush()
         return org, True

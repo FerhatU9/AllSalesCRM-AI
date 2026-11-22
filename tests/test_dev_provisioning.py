@@ -1,7 +1,5 @@
 """Local-only, repeatable development workspace provisioning."""
 
-from uuid import uuid4
-
 import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -79,3 +77,16 @@ def test_forged_or_empty_identity_is_rejected(session):
                 session, issuer=issuer, subject=subject,
                 slug="allsales-demo", display_name="Demo"
             )
+
+
+def test_existing_organization_cannot_be_claimed_by_another_identity(session):
+    args = dict(
+        issuer="https://example.eu.auth0.com/",
+        slug="allsales-demo", display_name="AllSales Demo",
+    )
+    provision_demo_workspace(session, subject="auth0|owner", **args)
+    session.commit()
+    with pytest.raises(ValueError, match="Existing organization"):
+        provision_demo_workspace(session, subject="auth0|other", **args)
+    session.rollback()
+    assert len(session.scalars(select(Membership)).all()) == 1
