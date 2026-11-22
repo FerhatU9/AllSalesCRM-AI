@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, ForeignKey, String, UniqueConstraint, Uuid, select
+from sqlalchemy import CheckConstraint, ForeignKey, Index, String, UniqueConstraint, Uuid, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 
@@ -49,6 +49,30 @@ class Membership(Base):
         Uuid(as_uuid=True), ForeignKey("identities.id", ondelete="CASCADE"), primary_key=True
     )
     role: Mapped[str] = mapped_column(String(16), nullable=False)
+
+
+class LeadRecord(Base):
+    """Synthetic lead metadata with organization ownership.
+
+    This schema is not approved to store actual customer information.
+    """
+
+    __tablename__ = "leads"
+    __table_args__ = (
+        CheckConstraint("status IN ('new', 'qualified', 'archived')", name="ck_lead_status"),
+        Index("ix_leads_org_id", "organization_id", "id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+    )
+    created_by_identity_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("identities.id", ondelete="RESTRICT"), nullable=False
+    )
+    company_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary: Mapped[str] = mapped_column(String(500), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="new")
 
 
 def find_membership(
