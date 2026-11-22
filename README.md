@@ -124,6 +124,16 @@ When deliberately running new live tests, prefer controlled batches and `--resum
 - `dify_exports/` — Gemini and Claude sanitized Dify app packages (workspace dataset ID removed)
 - `docs/` — setup, validation evidence, model review and engineering guidance
 
+## Development and commercial direction
+
+The application is **local-only**. It cannot be operated as a public customer-facing service in its current form. Runtime startup rejects nonlocal `ALLSALES_ENV` modes as a safety measure, not as a substitute for production security.
+
+- [Run both services with Docker Compose on your own computer](docs/CONTAINERS.md)
+- [Commercial architecture, priorities, and acceptance criteria](docs/COMMERCIAL_ARCHITECTURE.md)
+- [Security scope and reporting](SECURITY.md)
+
+Do not put real customers' personal information into this prototype. Each commercially deployable capability will need its own tested implementation, review, and Git commit.
+
 ## Project status and documentation
 
 This project is a local educational prototype based on fictional sales policies and leads. It does not connect to a real CRM, and the shared development token is not a production user authentication system.
