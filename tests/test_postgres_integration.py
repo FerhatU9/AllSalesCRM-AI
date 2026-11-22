@@ -16,7 +16,7 @@ from sqlalchemy import create_engine, inspect, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from allsales.auth import VerifiedIdentity, get_verified_identity
-from allsales.models import Identity, LeadRecord, Membership, Organization
+from allsales.models import Identity, LeadAuditEvent, LeadRecord, Membership, Organization
 from backend import api, lead_routes
 
 
@@ -33,7 +33,7 @@ def test_postgres_migrations_and_tenant_isolation(monkeypatch):
     engine = create_engine(url, pool_pre_ping=True)
     factory = sessionmaker(bind=engine, expire_on_commit=False)
     try:
-        assert {"organizations", "identities", "memberships", "leads"} <= set(inspect(engine).get_table_names())
+        assert {"organizations", "identities", "memberships", "leads", "lead_audit_events"} <= set(inspect(engine).get_table_names())
 
         with Session(engine) as session:
             org_a = Organization(slug="integration-a", display_name="Synthetic A")
@@ -74,9 +74,14 @@ def test_postgres_migrations_and_tenant_isolation(monkeypatch):
             lead_id = created.json()["id"]
             assert client.get(path(org_a_id, lead_id)).status_code == 200
             assert client.patch(path(org_a_id, lead_id), json={"status": "qualified"}).status_code == 200
+            assert client.get(path(org_a_id, lead_id) + "/activity").status_code == 403
             assert client.get(path(org_b_id)).status_code == 404
             assert client.get(path(org_b_id, lead_id)).status_code == 404
             assert client.patch(path(org_b_id, lead_id), json={"status": "archived"}).status_code == 404
+
+            set_identity("alice")
+            # Sales members cannot read audit trails, even though they can update leads.
+            assert client.get(path(org_a_id, lead_id) + "/activity").status_code == 403
 
             set_identity("viewer")
             assert client.get(path(org_a_id)).status_code == 200
@@ -87,6 +92,7 @@ def test_postgres_migrations_and_tenant_isolation(monkeypatch):
             assert client.get(path(org_b_id)).json() == []
             assert client.get(path(org_a_id, lead_id)).status_code == 404
             assert client.get(path(org_a_id)).status_code == 404
+            assert client.get(path(org_a_id, lead_id) + "/activity").status_code == 404
 
             api.app.dependency_overrides.clear()
             assert client.get(path(org_a_id)).status_code == 401
@@ -96,6 +102,13 @@ def test_postgres_migrations_and_tenant_isolation(monkeypatch):
             assert len(records) == 1
             assert records[0].organization_id == org_a_id
             assert records[0].status == "qualified"
+            events = session.scalars(select(LeadAuditEvent)).all()
+            assert len(events) == 2
+            assert events[0].organization_id == org_a_id
+            assert events[0].action == "created"
+            assert events[1].action == "updated"
+            assert events[1].previous_status == "new"
+            assert events[1].new_status == "qualified"
     finally:
         api.app.dependency_overrides.clear()
         engine.dispose()
