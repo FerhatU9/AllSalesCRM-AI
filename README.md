@@ -132,6 +132,7 @@ The application is **local-only**. It cannot be operated as a public customer-fa
 - [Commercial architecture, priorities, and acceptance criteria](docs/COMMERCIAL_ARCHITECTURE.md)
 - [Security scope and reporting](SECURITY.md)
 - [Identity and database foundation](docs/IDENTITY_AND_DATABASE.md)
+- [Organization-scoped synthetic lead API](docs/LEAD_STORAGE.md)
 
 Do not put real customers' personal information into this prototype. Each commercially deployable capability will need its own tested implementation, review, and Git commit.
 
