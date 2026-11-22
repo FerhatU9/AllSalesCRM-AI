@@ -26,3 +26,10 @@ results/
 results_private/
 logs/
 *_backup.py
+
+# Next.js customer web application
+web/node_modules/
+web/.next/
+web/out/
+web/*.tsbuildinfo
+web/.env.local
