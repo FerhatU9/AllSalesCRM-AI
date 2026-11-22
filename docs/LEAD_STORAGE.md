@@ -25,10 +25,10 @@ The API checks memberships from the **verified issuer and subject** on every req
 
 ## Isolation and validation
 
-Offline tests check Company A versus Company B, viewer read-only access, invalid updates, and missing Bearer authorization. Tests use SQLite in memory and fake authenticated identities injected through FastAPI's testing dependency override; a real identity provider and PostgreSQL remain untested.
+SQLite tests cover two-company isolation, read-only roles, invalid updates and missing Bearer authorization. A separate disposable PostgreSQL CI workflow checks migrations and cross-company API operations. Live OIDC sign-in and a production database remain unverified.
 
 ## Still required before any customer deployment
 
-Real provider login, organization provisioning, server-side row-level security, an audit log, request limiting, organization-safe knowledge retrieval, encrypted personal-data handling, retention/deletion, backups, security review and deployment controls.
+Live provider login, controlled customer onboarding, database row-level security, rate limits, organization-safe knowledge retrieval, data retention/deletion, backups, independent audit integrity and security review remain missing. Basic lead activity history is implemented; see [lead activity](LEAD_ACTIVITY.md).
 
 The current `ALLSALES_ENV` startup guard remains local-only. **Do not enter real customer information.**

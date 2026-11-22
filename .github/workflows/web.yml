@@ -1,4 +1,6 @@
 name: Web workspace checks
+permissions:
+  contents: read
 on:
   push:
     paths:
