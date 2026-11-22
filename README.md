@@ -58,6 +58,14 @@ Missing mandatory fields prevent a final priority tier. Discount approvals and s
 
 See [lead qualification details](docs/LEAD_QUALIFICATION.md) and [local scenario evidence](docs/LOCAL_VALIDATION.md).
 
+## Development account onboarding and database checks
+
+A local-only administrator command can now create a **fictional test organization** and assign its first owner from a provider-issued development identity. It refuses remote databases, avoids reassigning existing organizations, and never changes existing membership roles.
+
+A separate CI workflow runs **real PostgreSQL migrations and cross-organization API checks** against an ephemeral service. These complement the SQLite unit tests but do not prove commercial readiness or replace a live Auth0 browser login test.
+
+Follow [local development onboarding](docs/LOCAL_ONBOARDING.md) to configure and verify these features. Do not use real customer data or bypass local-only safeguards.
+
 ## Customer web workspace
 
 A new **Next.js + Auth0 customer workspace** is under development. It provides a landing page, hosted sign-in, an organizations list and organization-scoped synthetic lead screens, with server-side calls to the authenticated FastAPI endpoints. It is **not yet connected to a live Auth0 tenant or validated end-to-end**; real customer data and public deployment remain prohibited. Read the [customer web setup guide](docs/CUSTOMER_WEB.md).
