@@ -4,6 +4,6 @@ pydantic>=2.7,<3
 streamlit>=1.40,<2
 requests>=2.32,<3
 python-dotenv>=1.0,<2
-sqlalchemy>=2.0,<2.2
+sqlalchemy>=2.1.9,<2.2
 psycopg[binary]>=3.2,<4
 PyJWT[crypto]>=2.9,<3
