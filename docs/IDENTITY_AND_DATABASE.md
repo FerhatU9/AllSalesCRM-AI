@@ -24,7 +24,7 @@ Never commit real credentials. From the repository root run:
 python -m alembic -c alembic.ini upgrade head
 ```
 
-No signup or membership administration API is available yet. The current migration has SQLite test coverage; a fresh PostgreSQL deployment has not yet been independently verified.
+No signup or membership administration API is available yet. SQLite unit tests and disposable PostgreSQL CI migration tests exist. A customer or production database has not been validated.
 
 ## OIDC configuration
 
@@ -47,13 +47,13 @@ The endpoint returns only organizations with memberships matching the cryptograp
 
 ## Important limits
 
-- Login UI, sign-up, invitations, logout, token refresh, account provisioning and admin actions are not built.
+- A Next.js frontend with an Auth0 SDK login flow exists, but a complete real login has not yet been verified. Self-signup, invitations and role administration are not built.
 - Existing chat and lead-evaluation routes have not been migrated to OIDC authentication.
-- No persistent leads or tenant-scoped lead editing exists yet.
+- Synthetic lead persistence, organization-scoped CRUD and activity history exist. Live Auth0 integration and database row-level security remain incomplete.
 - Application checks need database-level defense, auditing and real identity-provider integration tests.
-- A real OIDC service and live PostgreSQL deployment are not yet validated.
+- JWT validation has offline tests, and PostgreSQL has disposable CI tests. Live OIDC integration and a production database are not validated.
 - **Do not use real customer data or expose the app to the internet.**
 
 ## Next milestone
 
-Implement provider-hosted login with authorization code and PKCE; controlled membership provisioning; persistent tenant-scoped leads; PostgreSQL integration tests; and ultimately retire the shared dev-token routes.
+Verify hosted login against a real Auth0 development tenant; add controlled invitations and membership administration, database-level row isolation, and authenticated organization-specific knowledge retrieval. The shared dev-token demo must remain local-only.

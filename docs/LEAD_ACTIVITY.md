@@ -4,13 +4,13 @@ AllSales CRM records a minimal audit trail for changes to **synthetic, organizat
 
 ## Recorded events
 
-When an authenticated user creates or meaningfully updates a lead, the API writes a \`lead_audit_events\` entry in the **same database transaction** as the lead change.
+When an authenticated user creates or meaningfully updates a lead, the API writes a `lead_audit_events` entry in the **same database transaction** as the lead change.
 
 Each event contains:
 
 - Organization and lead UUIDs
 - Verified actor's database identity UUID
-- Action: \`created\` or \`updated\`
+- Action: `created` or `updated`
 - Sorted names of the changed fields
 - Previous and new status, when status changes
 - Database-generated timestamp
@@ -21,20 +21,20 @@ The audit table deliberately excludes company names, lead summaries, access toke
 
 Authorized **organization owners and admins** can read a lead's history:
 
-\`\`\`http
+```http
 GET /v1/organizations/{organization_id}/leads/{lead_id}/activity?limit=50&offset=0
 Authorization: Bearer YOUR_PROVIDER_ISSUED_ACCESS_TOKEN
-\`\`\`
+```
 
 This route requires a validated OIDC access token, matching organization membership, an existing lead in that organization and owner/admin role. Viewers and sales-role users cannot read activity records. Nonmembers and cross-organization requests return 404. No public endpoint is provided to write, delete or alter audit records directly.
 
 ## Migration and tests
 
-Run Alembic migration \`003_lead_audit\` in an isolated development database:
+Run Alembic migration `003_lead_audit` in an isolated development database:
 
-\`\`\`powershell
+```powershell
 .\.venv\Scripts\python.exe -m alembic upgrade head
-\`\`\`
+```
 
 The new automated tests verify event accuracy, changed-field minimization, no-op updates, authorization and rollback behavior. PostgreSQL CI also checks migration and transactional event persistence.
 
