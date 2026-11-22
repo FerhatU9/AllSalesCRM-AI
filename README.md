@@ -58,6 +58,10 @@ Missing mandatory fields prevent a final priority tier. Discount approvals and s
 
 See [lead qualification details](docs/LEAD_QUALIFICATION.md) and [local scenario evidence](docs/LOCAL_VALIDATION.md).
 
+## Customer web workspace
+
+A new **Next.js + Auth0 customer workspace** is under development. It provides a landing page, hosted sign-in, an organizations list and organization-scoped synthetic lead screens, with server-side calls to the authenticated FastAPI endpoints. It is **not yet connected to a live Auth0 tenant or validated end-to-end**; real customer data and public deployment remain prohibited. Read the [customer web setup guide](docs/CUSTOMER_WEB.md).
+
 ## Run the local demo
 
 The instructions below target **Windows PowerShell** and a local Python installation. They do not deploy a public service.
