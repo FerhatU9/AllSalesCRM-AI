@@ -14,6 +14,9 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from allsales.dify_client import DifyClient, DifyError
+from allsales.auth import VerifiedIdentity, get_verified_identity
+from allsales.models import list_memberships
+from allsales.storage import session_factory
 from allsales.lead_qualification import LeadInput, LeadDecision, evaluate_lead
 
 load_dotenv()
@@ -151,3 +154,24 @@ def chat(request: ChatRequest):
 def evaluate_sales_lead(lead: LeadInput):
     """Evaluate fictional input locally; no Dify calls, database writes or CRM actions."""
     return evaluate_lead(lead)
+
+
+@app.get("/v1/account/organizations", tags=["Account"])
+def account_organizations(identity: VerifiedIdentity = Depends(get_verified_identity)):
+    """Return only organizations belonging to the cryptographically verified identity."""
+
+    try:
+        with session_factory()() as session:
+            memberships = list_memberships(
+                session, issuer=identity.issuer, subject=identity.subject
+            )
+            return {
+                "organizations": [
+                    {"id": str(organization.id), "name": organization.display_name,
+                     "slug": organization.slug, "role": role}
+                    for organization, role in memberships
+                ]
+            }
+    except (RuntimeError, ValueError) as exc:
+        logger.error("Account database is not configured: %s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Account database is unavailable") from exc
