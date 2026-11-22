@@ -6,6 +6,7 @@ This repository is an educational local prototype of an AI sales-policy assistan
 
 - **Synthetic lead data and synthetic policy documents only.**
 - The development API token is a shared local secret, not a user login or tenant security boundary.
+- The new experimental account endpoint verifies OIDC tokens, but the legacy sales endpoints have not been migrated. This is **not** an end-to-end authenticated customer product.
 - Do not expose FastAPI or Streamlit to the public internet, run a public cloud deployment, or store real customer information.
 - `ALLSALES_ENV` modes other than `local` are deliberately rejected until a secure production architecture exists.
 - Docker Compose publishes its services only to the local host. Never remove the loopback bind in a shared deployment.
