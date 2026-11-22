@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 st.set_page_config(page_title="AllSales CRM — Development", page_icon="📘", layout="centered")
 
-if os.getenv("ALLSALES_ENV", "local").strip().lower() != "local":
+if os.getenv("ALLSALES_ENV", "").strip().lower() != "local":
     st.error("Public deployment is disabled until secure user authentication and access control are implemented.")
     st.stop()
 

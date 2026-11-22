@@ -21,6 +21,10 @@ def test_local_mode_allows_health_check(monkeypatch):
     assert response.json()["status"] == "ok"
 
 
-def test_missing_mode_defaults_to_local_for_existing_development(monkeypatch):
+def test_missing_mode_is_rejected(monkeypatch):
     monkeypatch.delenv("ALLSALES_ENV", raising=False)
-    api.require_local_environment()
+    with pytest.raises(RuntimeError, match="local-only"):
+        api.require_local_environment()
+    with pytest.raises(RuntimeError, match="local-only"):
+        with TestClient(api.app):
+            pass

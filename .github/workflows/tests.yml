@@ -1,4 +1,8 @@
 name: Python tests
+permissions:
+  contents: read
+env:
+  ALLSALES_ENV: local
 on:
   push:
   pull_request:

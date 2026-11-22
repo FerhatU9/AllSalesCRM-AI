@@ -25,7 +25,7 @@ load_dotenv()
 
 def require_local_environment() -> None:
     """Reject staging or public deployment while using shared development credentials."""
-    mode = os.getenv("ALLSALES_ENV", "local").strip().lower()
+    mode = os.getenv("ALLSALES_ENV", "").strip().lower()
     if mode != "local":
         raise RuntimeError(
             "AllSales CRM is local-only until user authentication, access control, "
