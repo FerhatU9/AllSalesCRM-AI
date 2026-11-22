@@ -4,6 +4,7 @@ Caller-supplied organization identifiers never determine authorization.
 """
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
@@ -12,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from allsales.auth import VerifiedIdentity, get_verified_identity
-from allsales.models import Identity, LeadRecord, find_membership
+from allsales.models import Identity, LeadAuditEvent, LeadRecord, find_membership
 from allsales.storage import session_factory
 
 
@@ -103,6 +104,16 @@ def create_lead(
     if not record.company_name:
         raise HTTPException(status_code=422, detail="Company name must not be blank")
     session.add(record)
+    session.flush()
+    session.add(LeadAuditEvent(
+        organization_id=organization_id,
+        lead_id=record.id,
+        actor_identity_id=actor.id,
+        action="created",
+        changed_fields=["company_name", "summary", "status"],
+        previous_status=None,
+        new_status="new",
+    ))
     session.commit()
     session.refresh(record)
     return record
@@ -147,8 +158,68 @@ def update_lead(
         fields["company_name"] = fields["company_name"].strip()
         if not fields["company_name"]:
             raise HTTPException(status_code=422, detail="Company name must not be blank")
-    for key, value in fields.items():
-        setattr(record, key, value)
-    session.commit()
+    changed = {key: value for key, value in fields.items() if getattr(record, key) != value}
+    if changed:
+        previous_status = record.status
+        for key, value in changed.items():
+            setattr(record, key, value)
+        actor = session.scalar(select(Identity).where(
+            Identity.issuer == identity.issuer,
+            Identity.subject == identity.subject,
+        ))
+        if actor is None:
+            raise HTTPException(status_code=404, detail="Not found")
+        session.add(LeadAuditEvent(
+            organization_id=organization_id,
+            lead_id=record.id,
+            actor_identity_id=actor.id,
+            action="updated",
+            changed_fields=sorted(changed),
+            previous_status=previous_status if "status" in changed else None,
+            new_status=record.status if "status" in changed else None,
+        ))
+        session.commit()
     session.refresh(record)
     return record
+
+
+class AuditEventView(BaseModel):
+    id: UUID
+    lead_id: UUID
+    organization_id: UUID
+    actor_identity_id: UUID
+    action: str
+    changed_fields: list[str]
+    previous_status: str | None
+    new_status: str | None
+    occurred_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+@router.get("/{lead_id}/activity", response_model=list[AuditEventView])
+def lead_activity(
+    organization_id: UUID,
+    lead_id: UUID,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0, le=100000),
+    identity: VerifiedIdentity = Depends(get_verified_identity),
+    session=Depends(safe_session),
+):
+    """Return recorded lead changes to authorized organization admins only."""
+    membership = scoped_membership(session, identity, organization_id)
+    if membership.role not in {"owner", "admin"}:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    record = session.scalar(select(LeadRecord.id).where(
+        LeadRecord.id == lead_id,
+        LeadRecord.organization_id == organization_id,
+    ))
+    if record is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    return session.scalars(
+        select(LeadAuditEvent).where(
+            LeadAuditEvent.organization_id == organization_id,
+            LeadAuditEvent.lead_id == lead_id,
+        ).order_by(LeadAuditEvent.occurred_at, LeadAuditEvent.id)
+        .limit(limit).offset(offset)
+    ).all()
