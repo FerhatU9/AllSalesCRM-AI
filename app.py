@@ -12,6 +12,10 @@ from dotenv import load_dotenv
 load_dotenv()
 st.set_page_config(page_title="AllSales CRM — Development", page_icon="📘", layout="centered")
 
+if os.getenv("ALLSALES_ENV", "local").strip().lower() != "local":
+    st.error("Public deployment is disabled until secure user authentication and access control are implemented.")
+    st.stop()
+
 url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
 app_token = os.getenv("API_APP_TOKEN", "")
 if not app_token:
