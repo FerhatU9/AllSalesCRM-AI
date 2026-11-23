@@ -220,6 +220,6 @@ def lead_activity(
         select(LeadAuditEvent).where(
             LeadAuditEvent.organization_id == organization_id,
             LeadAuditEvent.lead_id == lead_id,
-        ).order_by(LeadAuditEvent.occurred_at, LeadAuditEvent.id)
+        ).order_by(LeadAuditEvent.sequence)
         .limit(limit).offset(offset)
     ).all()
