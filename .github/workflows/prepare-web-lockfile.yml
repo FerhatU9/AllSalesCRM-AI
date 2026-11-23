@@ -1,14 +1,12 @@
 name: Prepare frontend dependency lockfile
 
 on:
-  pull_request:
-    paths:
-      - 'web/package.json'
-      - '.github/workflows/prepare-web-lockfile.yml'
+  push:
+    branches: [maintenance/reproducible-web-dependencies]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate:
@@ -44,3 +42,14 @@ jobs:
           name: verified-web-package-lock
           path: web/package-lock.json
           if-no-files-found: error
+      - name: Commit verified lockfile to development branch
+        if: github.ref == 'refs/heads/maintenance/reproducible-web-dependencies'
+        working-directory: .
+        run: |
+          git add web/package-lock.json
+          if git diff --cached --quiet; then
+            echo "Lockfile unchanged"
+          else
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "Lock verified frontend dependency versions"
+            git push origin HEAD:maintenance/reproducible-web-dependencies
+          fi
