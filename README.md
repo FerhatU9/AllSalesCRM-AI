@@ -120,7 +120,7 @@ When deliberately running new live tests, prefer controlled batches and `--resum
 - `data/golden_17_questions.csv` — evaluation questions with expected policy facts
 - `data/evaluation_34_reviewed.csv` — manually reviewed model outputs (no real customers)
 - `scripts/` — offline lead demo, evaluation utilities and controlled live collectors
-- `tests/` — 66 offline tests (including lead-rule boundaries, missing fields, auth and fallback)
+- `tests/` — automated offline tests (including scoring boundaries, organization isolation, missing fields, authentication and fallback)
 - `dify_exports/` — Gemini and Claude sanitized Dify app packages (workspace dataset ID removed)
 - `docs/` — setup, validation evidence, model review and engineering guidance
 
@@ -131,6 +131,7 @@ The application is **local-only**. It cannot be operated as a public customer-fa
 - [Run both services with Docker Compose on your own computer](docs/CONTAINERS.md)
 - [Commercial architecture, priorities, and acceptance criteria](docs/COMMERCIAL_ARCHITECTURE.md)
 - [Security scope and reporting](SECURITY.md)
+- [Identity and database foundation](docs/IDENTITY_AND_DATABASE.md)
 
 Do not put real customers' personal information into this prototype. Each commercially deployable capability will need its own tested implementation, review, and Git commit.
 
