@@ -1,6 +1,6 @@
 # AllSales CRM AI
 
-**Sales-policy intelligence and rule-based lead qualification, built with Python, FastAPI, Streamlit, Dify, Gemini and Claude.**
+**Sales-policy assistance, deterministic lead qualification, and organization-scoped lead management.**
 
 AllSales CRM AI explores how a sales team could retrieve answers from approved policy documents, assess leads consistently, and manage organization-scoped lead records. It combines AI-assisted policy answers with deterministic Python decision rules so the language model does not determine sales scores or authorize actions.
 
@@ -13,13 +13,13 @@ AllSales CRM AI explores how a sales team could retrieve answers from approved p
 | Sales-policy Q&A | Gemini and Claude through separate Dify Chatflows | Requires externally configured Dify knowledge and API keys |
 | Lead qualification | Deterministic scoring, priority, team routing, follow-up and escalation | Local Streamlit demo; recommendations only |
 | AI explanations | Optional model-generated explanation of derived lead decisions | Advisory; does not override Python scoring |
-| Account identity | OIDC access-token verification and organization membership lookup | No customer login or onboarding UI yet |
-| Lead record API | Create, list, read and update organization-scoped synthetic records | Separate API; not integrated into Streamlit |
+| Account identity | OIDC token verification and organization memberships | Next.js/Auth0 login code exists; live sign-in is not yet verified |
+| Lead record API | Organization-scoped create, list, read and update; role checks and activity history | Next.js pages use this API; real identity-provider login is not yet tested |
 | Quality checks | Automated Python tests, model evaluation and UI scenario records | Not a production security or reliability certification |
 
 ## How it works
 
-AllSales CRM AI currently has **two distinct development paths**:
+AllSales CRM AI currently has **two development paths**. The newer web frontend and the original demo remain separate:
 
 ```mermaid
 flowchart TD
@@ -32,13 +32,16 @@ flowchart TD
     E --> G[Policy answer and document labels]
     F --> H[Score, routing and recommendations]
 
-    I[API client with verified OIDC access token] --> J[Authenticated FastAPI endpoints]
+    W[Next.js web workspace with Auth0 integration] --> I[Server-side calls with OIDC access tokens]
+    I --> J[Authenticated FastAPI endpoints]
     J --> L[Organization membership and role checks]
     L --> M[Organization-scoped lead records]
-    M --> N[(SQLAlchemy / database)]
+    M --> N[(PostgreSQL via SQLAlchemy)]
+    J --> Q[Lead activity history]
+    Q --> N
 ```
 
-The Streamlit demo uses a **shared local development token**. The separate account and lead-record API uses verified OIDC identities and organization membership checks. These paths are **not yet a unified customer login experience**. Dify returns document labels, not verified passage-level citations.
+The Streamlit demo uses a **shared local development token**. The separate Next.js workspace has Auth0 session code; its FastAPI account and lead routes verify OIDC tokens and organization memberships. The full browser login and database journey **has not been tested with a live identity provider**. The authenticated workspace does not yet include the Dify policy assistant. Dify supplies document labels, not verified passage-level citations.
 
 ### Lead qualification example
 
@@ -78,7 +81,7 @@ A new **Next.js + Auth0 customer workspace** is under development. It provides a
 
 ## Run the local demo
 
-The instructions below target **Windows PowerShell** and a local Python installation. They do not deploy a public service.
+The instructions below target **Windows PowerShell** and a local Python installation. They do not deploy a public service. Set `ALLSALES_ENV=local` explicitly in your untracked `.env`; the application refuses to start if the mode is missing or nonlocal.
 
 **Requirements:** Python 3.11 or 3.12. Policy Q&A also needs a Dify workspace with the model providers configured, the included synthetic handbook indexed, and both sanitized Chatflows imported and re-linked. Follow the [Dify setup guide](docs/DIFY_REPRODUCTION.md).
 
