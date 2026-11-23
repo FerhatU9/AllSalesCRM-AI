@@ -58,6 +58,12 @@ Missing mandatory fields prevent a final priority tier. Discount approvals and s
 
 See [lead qualification details](docs/LEAD_QUALIFICATION.md) and [local scenario evidence](docs/LOCAL_VALIDATION.md).
 
+## Lead activity history
+
+Authenticated lead creation and meaningful updates now generate organization-scoped activity records containing verified actor identity, changed field names and relevant status transitions. Organization owners and admins can view these events through a read-only API. The activity record and lead change share one transaction, helping prevent a successful change without its accompanying audit entry.
+
+This is **development-grade activity tracking**, not immutable or production-compliant audit logging. See the [lead activity guide](docs/LEAD_ACTIVITY.md).
+
 ## Development account onboarding and database checks
 
 A local-only administrator command can now create a **fictional test organization** and assign its first owner from a provider-issued development identity. It refuses remote databases, avoids reassigning existing organizations, and never changes existing membership roles.
