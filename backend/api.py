@@ -12,6 +12,7 @@ from typing import Literal
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy.exc import SQLAlchemyError
 
 from allsales.dify_client import DifyClient, DifyError
 from allsales.auth import VerifiedIdentity, get_verified_identity
@@ -173,8 +174,8 @@ def account_organizations(identity: VerifiedIdentity = Depends(get_verified_iden
                     for organization, role in memberships
                 ]
             }
-    except (RuntimeError, ValueError) as exc:
-        logger.error("Account database is not configured: %s", type(exc).__name__)
+    except (SQLAlchemyError, RuntimeError, ValueError) as exc:
+        logger.error("Account database is unavailable: %s", type(exc).__name__)
         raise HTTPException(status_code=503, detail="Account database is unavailable") from exc
 
 

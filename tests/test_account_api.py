@@ -58,3 +58,29 @@ def test_account_organizations_are_identity_scoped(monkeypatch):
     finally:
         api.app.dependency_overrides.clear()
         engine.dispose()
+
+
+def test_account_database_failure_is_sanitized(monkeypatch):
+    """An unavailable database must not leak connection strings or raise an HTTP 500."""
+    from sqlalchemy.exc import OperationalError
+
+    monkeypatch.setenv("ALLSALES_ENV", "local")
+    def unavailable_database():
+        raise OperationalError(
+            "SELECT identities.subject FROM identities",
+            {},
+            Exception("sensitive-test-database-host"),
+        )
+
+    monkeypatch.setattr(api, "session_factory", unavailable_database)
+    api.app.dependency_overrides[get_verified_identity] = (
+        lambda: VerifiedIdentity(issuer="https://idp.example/", subject="alice")
+    )
+    try:
+        with TestClient(api.app) as client:
+            response = client.get("/v1/account/organizations")
+        assert response.status_code == 503
+        assert response.json() == {"detail": "Account database is unavailable"}
+        assert "sensitive-test-database-host" not in response.text
+    finally:
+        api.app.dependency_overrides.clear()
