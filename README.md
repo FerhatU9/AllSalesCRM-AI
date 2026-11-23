@@ -6,6 +6,12 @@ AllSales CRM explores how a sales team could retrieve answers from approved poli
 
 > **Project status: local development prototype.** This repository uses a fictional company, a synthetic policy handbook and sample leads. The code is publicly available, but the application is **not** a deployed service, a complete CRM, or approved for real customer data.
 
+## Public website
+
+The [AllSales CRM public website](site/) is a static product showcase built from this repository's documented capabilities and actual synthetic-data screenshots. It does **not** host the FastAPI backend, customer login, AI providers, or a live CRM service.
+
+GitHub Pages publishing is configured in `.github/workflows/site.yml`. The repository owner must select **Settings → Pages → Build and deployment → GitHub Actions**, confirm the deployment succeeds, and verify the published address before sharing it. See [website setup and verification](site/README.md).
+
 ## At a glance
 
 | Capability | Implemented | Boundary |
