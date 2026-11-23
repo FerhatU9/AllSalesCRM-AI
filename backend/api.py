@@ -3,6 +3,7 @@
 IMPORTANT: Single shared API_APP_TOKEN is intentionally a local-development
 mechanism; it is NOT a production user authentication solution.
 """
+from contextlib import asynccontextmanager
 import hmac
 import logging
 import os
@@ -16,7 +17,26 @@ from allsales.dify_client import DifyClient, DifyError
 from allsales.lead_qualification import LeadInput, LeadDecision, evaluate_lead
 
 load_dotenv()
-app = FastAPI(title="AllSales CRM Development API", version="0.8.0", docs_url="/docs")
+
+
+def require_local_environment() -> None:
+    """Reject staging or public deployment while using shared development credentials."""
+    mode = os.getenv("ALLSALES_ENV", "local").strip().lower()
+    if mode != "local":
+        raise RuntimeError(
+            "AllSales CRM is local-only until user authentication, access control, "
+            "and tenant isolation are implemented."
+        )
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    require_local_environment()
+    yield
+
+
+app = FastAPI(title="AllSales CRM Development API", version="0.8.0",
+              docs_url="/docs", lifespan=lifespan)
 logger = logging.getLogger(__name__)
 
 
