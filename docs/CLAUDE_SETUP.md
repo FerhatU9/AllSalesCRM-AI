@@ -1,6 +1,6 @@
 # Claude + Gemini configuration guide — for fresh installations
 
-**Status:** Claude and Gemini were tested successfully in the development workspace on 18 November 2026. This guide describes how to set them up in a new workspace; do not re-create or repurchase keys for the currently working apps.
+**Status:** Claude and Gemini were tested successfully in the development workspace. This guide describes how to set them up in a new workspace; do not re-create or repurchase keys for the currently working apps.
 
 
 The goal is to compare **two AI models** while keeping retrieval, handbook, and prompts the same.

@@ -2,7 +2,7 @@
 
 **Training document — entirely synthetic.** AllSales CRM, its rules, numbers and procedures are fictional. This material was created solely for an educational RAG assignment. It is not legal advice, a representation of any actual company policy, or a statement of Dutch/EU legal requirements.
 
-**Version:** 1.0  | **Effective for the example:** 1 October 2026 | **Document owner:** Sales Operations (fictional)
+**Version:** 1.0 | **Document owner:** Sales Operations (fictional)
 
 ## Section 1 — Business scope and intended audience
 
