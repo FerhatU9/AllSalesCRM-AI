@@ -1,8 +1,8 @@
-# AllSales CRM AI
+# AllSales CRM
 
 **Sales-policy assistance, deterministic lead qualification, and organization-scoped lead management.**
 
-AllSales CRM AI explores how a sales team could retrieve answers from approved policy documents, assess leads consistently, and manage organization-scoped lead records. It combines AI-assisted policy answers with deterministic Python decision rules so the language model does not determine sales scores or authorize actions.
+AllSales CRM explores how a sales team could retrieve answers from approved policy documents, assess leads consistently, and manage organization-scoped lead records. It combines AI-assisted policy answers with deterministic Python decision rules so the language model does not determine sales scores or authorize actions.
 
 > **Project status: local development prototype.** This repository uses a fictional company, a synthetic policy handbook and sample leads. The code is publicly available, but the application is **not** a deployed service, a complete CRM, or approved for real customer data.
 
@@ -19,7 +19,7 @@ AllSales CRM AI explores how a sales team could retrieve answers from approved p
 
 ## How it works
 
-AllSales CRM AI currently has **two development paths**. The newer web frontend and the original demo remain separate:
+AllSales CRM currently has **two development paths**. The newer web frontend and the original demo remain separate:
 
 ```mermaid
 flowchart TD
@@ -121,7 +121,7 @@ The organization-scoped lead API is **separate from the Streamlit demo**. It req
 2. An explicitly configured OIDC issuer, API audience and HTTPS JWKS URL.
 3. Provider-issued RS256 access tokens and provisioned organization memberships.
 
-The API offers organization listing plus lead list/create/read/update endpoints, with role checks and organization-scoped queries. It does **not** offer public self-registration, invitation management or a customer login interface. See [identity/database setup](docs/IDENTITY_AND_DATABASE.md) and [lead API reference](docs/LEAD_STORAGE.md).
+The API offers organization listing plus lead list/create/read/update endpoints, with role checks and organization-scoped queries. It does **not** offer public self-registration or invitation management; the Next.js login interface exists in code but has not been verified with a real Auth0 tenant. See [identity/database setup](docs/IDENTITY_AND_DATABASE.md) and [lead API reference](docs/LEAD_STORAGE.md).
 
 ## Testing and evidence
 
@@ -152,7 +152,7 @@ Read the [evaluation report](docs/EVALUATION_RESULTS.md), [reviewed responses](d
 
 ## Roadmap to a usable product
 
-The intended first commercial milestone is a **controlled pilot for one consenting business**, followed by broader rollout only after the required security and operational checks.
+The intended first commercial milestone is a **controlled pilot for one consenting business**, followed by broader rollout only after the required security and operational checks. The [working roadmap](docs/PRODUCTION_PLAN.md) is organized around hands-on VS Code implementation and tested user journeys; the [architecture reference](docs/COMMERCIAL_ARCHITECTURE.md) distinguishes existing components from planned technologies.
 
 - **Identity and onboarding:** Real browser login, token lifecycle, organization invitations and provisioning.
 - **Secure company workspaces:** Extend authorization to the entire application and knowledge retrieval; add database-level isolation and audit trails.

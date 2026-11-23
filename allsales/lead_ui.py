@@ -64,7 +64,7 @@ def render_lead_form(api_url: str, headers: dict[str, str]) -> None:
         submitted = st.form_submit_button("Evaluate fictional lead", type="primary", use_container_width=True)
 
     if submitted:
-        st.session_state.pop("lead_ai_explanation_v08", None)
+        st.session_state.pop("lead_ai_explanation", None)
         payload = {
             "company_name": company, "country": "" if country == "Not provided" else country,
             "employee_count": None if employee_unknown else int(employees),
@@ -84,11 +84,11 @@ def render_lead_form(api_url: str, headers: dict[str, str]) -> None:
             if not r.ok:
                 st.error(f"Evaluation failed (HTTP {r.status_code}). Check that FastAPI is running and updated.")
             else:
-                st.session_state["lead_decision_v08"] = r.json()
+                st.session_state["lead_decision"] = r.json()
         except (requests.RequestException, ValueError):
             st.error("Cannot reach the local FastAPI service. Verify port 8000 and restart the backend.")
 
-    decision = st.session_state.get("lead_decision_v08")
+    decision = st.session_state.get("lead_decision")
     if not decision:
         return
     st.divider()
@@ -144,21 +144,21 @@ def render_lead_form(api_url: str, headers: dict[str, str]) -> None:
         if not models:
             st.info("No Dify model is available for optional explanations; the deterministic result remains usable.")
         else:
-            explanation_model = st.selectbox("Explanation model", models, key="lead_explanation_model_v08")
-            if st.button("Ask AI to explain the policy (credit-consuming)", key="lead_explain_v08"):
-                st.session_state.setdefault("lead_explanation_user_v08", str(uuid.uuid4()))
+            explanation_model = st.selectbox("Explanation model", models, key="lead_explanation_model")
+            if st.button("Ask AI to explain the policy (credit-consuming)", key="lead_explain"):
+                st.session_state.setdefault("lead_explanation_user", str(uuid.uuid4()))
                 prompt = build_explanation_prompt(decision)
                 try:
                     with st.spinner(f"Asking {explanation_model} for a policy explanation..."):
                         response = requests.post(
                             f"{api_url}/v1/chat", headers=headers,
                             json={"question": prompt,
-                                  "user_id": st.session_state["lead_explanation_user_v08"],
+                                  "user_id": st.session_state["lead_explanation_user"],
                                   "conversation_id": "", "model": explanation_model,
                                   "allow_fallback": False}, timeout=110)
                     if response.ok:
                         data = response.json()
-                        st.session_state["lead_ai_explanation_v08"] = {
+                        st.session_state["lead_ai_explanation"] = {
                             "text": data.get("answer", ""), "model": data.get("model", explanation_model),
                             "sources": data.get("source_documents", []),
                         }
@@ -167,8 +167,8 @@ def render_lead_form(api_url: str, headers: dict[str, str]) -> None:
                                  "The rule-based evaluation is unaffected.")
                 except (requests.RequestException, ValueError):
                     st.error("Could not retrieve the optional explanation. The decision report remains valid.")
-        if st.session_state.get("lead_ai_explanation_v08"):
-            result = st.session_state["lead_ai_explanation_v08"]
+        if st.session_state.get("lead_ai_explanation"):
+            result = st.session_state["lead_ai_explanation"]
             st.write(result["text"])
             st.caption("AI explanation by " + result["model"] + ". Verify section references against the handbook.")
             if result["sources"]:

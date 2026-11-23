@@ -87,4 +87,4 @@ Open `http://localhost:3000`. Sign in to see your assigned organizations, then v
 
 ## Next work
 
-Implement controlled account provisioning and invitations, PostgreSQL integration tests, a proper policy assistant inside the authenticated workspace, audit logging, rate limiting, UI error/empty-state testing and managed deployment only after security review.
+Implement controlled account provisioning and invitations, a real Auth0 browser-to-PostgreSQL test, a policy assistant with organization-scoped retrieval, production-quality audit integrity, rate limiting, UI error/empty-state testing, and managed deployment only after security review. Disposable PostgreSQL integration tests and basic lead activity storage already exist.
