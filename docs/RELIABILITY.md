@@ -23,6 +23,6 @@ For a normal integration smoke test, start the two local services and send one s
 
 ## Limitations
 
-The shared development token is not real user authentication. This local prototype has no tenant isolation, per-user authorization, production rate limits, or operational monitoring. Do not send real customer data or expose it publicly.
+The shared development token is not real user authentication. The original Streamlit policy assistant still has no tenant-specific retrieval or per-user authorization. The separate OIDC-protected lead API does include organization membership checks, but production-grade tenant isolation, rate limits and monitoring are not complete. Do not send real customer data or expose it publicly.
 
 See the [production development plan](PRODUCTION_PLAN.md) for future hardening.
