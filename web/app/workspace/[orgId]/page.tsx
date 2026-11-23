@@ -17,7 +17,19 @@ const messages:Record<string,string> = {
 export default async function OrganizationWorkspace({params,searchParams}:Props) {
   const {orgId} = await params;
   const {notice} = await searchParams;
-  const organizations = await listOrganizations().catch(() => []);
+  let organizations;
+  try {
+    organizations = await listOrganizations();
+  } catch (err) {
+    return (
+      <section className="panel" role="alert">
+        <h1>Workspace unavailable</h1>
+        <p>{err instanceof BackendError ? err.message : "Could not load your organizations."}</p>
+        <p className="product-caveat">Check the local API and database connection, then try again.</p>
+        <Link className="button" href="/workspace">Back to organizations</Link>
+      </section>
+    );
+  }
   const org = organizations.find(o => o.id === orgId);
   if (!org) notFound();
   let leads: Lead[] = [];
