@@ -1,0 +1,32 @@
+# Development only. All published ports are bound to loopback.
+# Never deploy this file to an internet-facing host.
+services:
+  api:
+    build: .
+    env_file:
+      - .env
+    environment:
+      ALLSALES_ENV: local
+    command: ["uvicorn", "backend.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  web:
+    build: .
+    env_file:
+      - .env
+    environment:
+      ALLSALES_ENV: local
+      BACKEND_URL: http://api:8000
+    command: ["streamlit", "run", "app.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true"]
+    ports:
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
