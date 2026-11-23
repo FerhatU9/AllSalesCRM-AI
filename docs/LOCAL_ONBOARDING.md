@@ -30,7 +30,7 @@ From the repository root with your Python virtual environment:
 .\.venv\Scripts\python.exe -m alembic upgrade head
 ```
 
-The Alembic migration creates organization, identity, membership and synthetic lead tables.
+The Alembic migrations create organization, identity, membership, synthetic lead and lead activity tables. The audit records are development-grade, not tamper-proof.
 
 ## 3. Configure a development identity
 
@@ -56,4 +56,4 @@ The integration test refuses to execute unless it finds a CI environment and an 
 
 ## Remaining commercial requirements
 
-Real account invitations and role administration, a production-ready authentication configuration, tenant-scoped RAG access, audit logging, rate limits, row-level data protection, backup restoration, monitoring, and privacy review are **not complete**. No public customer deployment is authorized by this milestone.
+Real account invitations and role administration, a production-ready authentication configuration, tenant-scoped RAG access, production-grade tamper-resistant audit logging, rate limits, row-level data protection, backup restoration, monitoring, and privacy review are **not complete**. No public customer deployment is authorized by this milestone.
