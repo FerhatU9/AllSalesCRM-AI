@@ -1,106 +1,67 @@
-# Commercial architecture and delivery plan
+# AllSales CRM — Architecture and commercial requirements
 
-## Product goal
+AllSales CRM is a **local development prototype** intended to become an AI-assisted B2B sales product. The initial commercial target is a controlled pilot with one consenting business. See the [product development roadmap](PRODUCTION_PLAN.md) for the sequence, hands-on development approach and release gates.
 
-AllSales CRM AI is intended to help a sales team search approved policies, qualify leads, understand next actions, and prepare human-reviewed CRM updates. The first commercial target is a **private pilot for one consenting company**, not an immediately public multi-company SaaS.
+## Implemented architecture
 
-Today the application is a local development prototype using synthetic policies and records. The security features below are **proposals, not current capabilities**.
+```mermaid
+flowchart LR
+    subgraph Demo["Local Streamlit demo"]
+        ST[Streamlit] --> DEV[FastAPI demo endpoints]
+        DEV --> RULES[Python lead qualification]
+        DEV --> DIFY[Dify Gemini / Claude Chatflows]
+        DIFY --> KB[Synthetic knowledge in Dify]
+    end
 
-## Recommended architecture
+    subgraph Web["Authenticated web foundation"]
+        NEXT[Next.js + Auth0 SDK] --> API[FastAPI account and lead endpoints]
+        API --> OIDC[OIDC token verification]
+        API --> ROLES[Organization membership checks]
+        ROLES --> DB[(SQLAlchemy / PostgreSQL)]
+        API --> ACT[Lead activity tracking]
+        ACT --> DB
+    end
+```
 
-| Layer | Current implementation | Commercial target |
+**Important distinctions:**
+
+- The Streamlit demo uses a shared local development token. It is not a production login mechanism.
+- The Next.js code includes Auth0 integration and passes frontend builds, but a **real Auth0 browser login has not been verified**.
+- The FastAPI lead and account endpoints verify bearer tokens and check organization memberships. PostgreSQL integration is tested against a disposable CI database, not a production service.
+- The authenticated Next.js workspace does **not** yet include the Dify policy assistant. The synthetic Dify knowledge is not organization-aware.
+- Lead activity events exist, but no immutable/tamper-resistant operational audit service has been demonstrated.
+- Docker Compose currently runs the local FastAPI/Streamlit demo, **not** a fully configured Next.js/Auth0/PostgreSQL product.
+
+## Architecture decisions
+
+| Concern | Existing work | Target and acceptance condition |
 | --- | --- | --- |
-| Web experience | Local Streamlit | Authenticated Next.js/React application; keep Streamlit only for internal admin demonstrations |
-| API | FastAPI with one shared development key | FastAPI with OIDC login validation, role/organization checks and per-user authorization |
-| Business logic | Deterministic Python scoring and routing | Versioned rules, explicit approvals and policy ownership; keep LLM output advisory |
-| AI orchestration | Dify Chatflows for Gemini and Claude | Keep Dify initially; introduce LangGraph only if controlled multi-step workflows justify it |
-| Knowledge | One synthetic Dify knowledge base | Per-organization approved document ingestion, deletion, access checks, provenance and source-span citations |
-| Data | No persistent CRM/customer records | PostgreSQL for tenant data, audit records and lead decisions; encrypted backup/recovery |
-| Asynchronous work | Synchronous requests only | Background worker and queue (Redis + task worker), with idempotency and limits |
-| Identity | Shared development API token | Managed OIDC identity provider, short-lived validated tokens, RBAC and least privilege |
-| Deployment | Local process / loopback-only Docker Compose | Separate staging and production on managed EU cloud infrastructure, HTTPS, secrets manager, CI/CD |
-| Telemetry | Developer-oriented tests and logs | Structured metrics/traces with redaction and retention controls, error tracking, alerts |
-| Security | Local-only guardrails | Tenant isolation, dependency/code scanning, threat model, rate limits and external security review |
-| Operations | Manual instructions | Health/readiness checks, migrations, incident response, backups, rollback and runbooks |
+| Browser experience | Next.js pages plus separate Streamlit demo | Complete authenticated workflow and tested permission-aware UI |
+| API | FastAPI demo routes and authenticated account/lead routes | One consistently secured customer API; shared-token routes isolated from deployments |
+| Identity | Auth0 SDK code and FastAPI RS256 token verification | Live OIDC login, lifecycle, invitations and role administration tested |
+| Data | SQLAlchemy, Alembic, organization-scoped leads and activity records | Proper tenant isolation, migrations, recovery, retention and authorization |
+| AI | Dify Chatflows for Gemini/Claude | Approved company-scoped retrieval, source-span citations, evaluation and abstention |
+| Decision logic | Deterministic lead qualification | Versioned, approved rules independent from LLM-generated text |
+| Workflow automation | No integrated live CRM workflow | Sandbox integration, authentication, explicit approvals, idempotent actions |
+| Reliability | GitHub CI, disposable PostgreSQL integration, local Docker configuration | Browser tests, staging, observability, alerting, restore drills and security review |
+| Deployment | Local-only startup restriction | Controlled hosting only after documented identity, data protection and operational gates |
 
-Technology choices are provisional. A managed cloud (Azure or AWS), PostgreSQL, OpenTelemetry and a hosted identity provider are credible starting options. Choose based on pilot customer requirements, data residency, cost and team capacity. Avoid deploying Kubernetes or an elaborate agent framework until operational complexity justifies them.
+## Product security boundaries
 
-## Workstreams and acceptance criteria
+All input and data are currently synthetic. Do not enable public serving or use real customer information. Never treat the model, browser, tenant ID in a URL, or GitHub CI success as authorization. The backend must verify the identity and effective company membership on every sensitive operation, including retrieval.
 
-### 1. Local reliability and reproducibility
+The product still needs comprehensive company-level access enforcement, privacy practices, secure secrets management, monitoring, rate limits, backup restoration, incident procedures and an independent security assessment.
 
-- Development mode fails closed when a nonlocal deployment mode is requested.
-- Application starts using documented local Docker Compose with ports bound to loopback.
-- Unit tests and syntax validation pass on supported Python versions.
-- Reproduction instructions and known external Dify dependencies are explicit.
+## Product-building practice
 
-**Gate:** fresh developer machine runs the synthetic app and local tests without undisclosed setup; do not call this production.
+The developer implements and runs meaningful product steps in VS Code with clear guidance about **what**, **why** and **how**. Record observed behavior and tests before calling a feature complete. Repository maintenance can be handled separately; it does not replace learning how the actual technologies work.
 
-### 2. Identity, authorization and data protection
+Choose additional tools only when they solve demonstrated product needs. LangGraph, n8n, OpenTelemetry, Playwright and managed cloud services are possible future additions, not capabilities currently verified.
 
-- Select an OIDC identity provider and validate issuer, audience, signature and token expiry.
-- Assign each user a real identity and organization; derive tenant from verified identity, never from request text.
-- Authorize every sensitive endpoint and knowledge retrieval by organization and role.
-- Add unauthorized cross-tenant access tests and audit records with sensitive-field redaction.
+## Related documentation
 
-**Gate:** no cross-company information exposure in automated integration and negative tests.
-
-### 3. Persistent sales workflows
-
-- Add PostgreSQL with migrations and defined entities for organizations, users, leads, decisions, approvals and audit events.
-- Build lead create/read/update flows with validated permissions and an explicitly approved CRM sandbox adapter.
-- Make external actions idempotent, record who approved them and support cancellation/rollback where feasible.
-- Keep AI suggestions separate from business-rule decisions and approved actions.
-
-**Gate:** negative tests prove a model response cannot silently update a CRM or authorize a discount.
-
-### 4. Evidence-backed AI and evaluation
-
-- Version customer knowledge, track consent and deletions, enforce document-level access before retrieval.
-- Provide source-span references (not only document names); abstain when evidence is inadequate.
-- Expand the evaluation set beyond 17 synthetic questions to include unsupported answers, retrieval attacks, prompt injection, consent and routing edge cases.
-- Measure answer accuracy, citation quality, latency, provider outages and costs; require opt-in for cross-provider fallback.
-
-**Gate:** reproducible evaluation and an agreed minimum quality threshold on customer-approved test scenarios.
-
-### 5. Controlled deployment
-
-- Deploy staging separately from production using HTTPS, secrets management, encryption, rate limits, network controls and a security review.
-- Document data inventory, retention/deletion requests, processor agreements and applicable privacy/compliance obligations with professional legal review.
-- Test backup restoration, incident response, key rotation and production rollback.
-
-**Gate:** an accountable pilot owner signs off on the risks and live customer access.
-
-### 6. Commercial pilot and scaling
-
-- Recruit one authorized business, agree its acceptable uses, pricing and a paid pilot scope.
-- Measure user adoption, error rates, supported-answer rates, time saved and actual value.
-- Only after the pilot validates security and usefulness, add multi-tenant onboarding, billing and subscription management (for example, Stripe) where justified.
-
-**Gate:** documented customer acceptance and sustainable service operations.
-
-## GitHub practice
-
-Use small pull requests with distinct outcomes. One tested feature or engineering improvement per commit is better than many cosmetic commits. Suggested commit progression:
-
-1. `Enforce local-only runtime safeguards`
-2. `Add reproducible local containers`
-3. `Document commercial architecture and security boundaries`
-4. `Implement authenticated user identity`
-5. `Introduce database migrations and organization models`
-6. `Enforce tenant-scoped lead access`
-7. `Add audit logs and approval controls`
-8. `Introduce secure CRM sandbox integration`
-
-Only mark future work completed after implementation and validation. **Never rewrite history just to inflate the commit count.**
-
-## Current limitations
-
-- No real account login or per-user identity.
-- No verified tenant-aware permission controls.
-- No real CRM integration or persistent lead history.
-- Dify configuration and model availability remain external dependencies.
-- No real-company data processing has been approved or audited.
-- No independent operational security, load or penetration testing.
-
-A deployable application is not automatically commercial-ready. A paid pilot requires explicit product, security, privacy and operational acceptance criteria.
+- [Roadmap and completion gates](PRODUCTION_PLAN.md)
+- [Implemented features and limitations](PROJECT_STATUS.md)
+- [Customer web setup](CUSTOMER_WEB.md)
+- [Database and development onboarding](LOCAL_ONBOARDING.md)
+- [Security policy](../SECURITY.md)
