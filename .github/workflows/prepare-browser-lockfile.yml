@@ -1,0 +1,41 @@
+name: Update browser test dependency lockfile
+
+on:
+  push:
+    branches: [testing/browser-smoke-tests]
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve dependency tree from registry
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Verify clean installation
+        run: npm ci --no-audit --no-fund
+      - name: Verify TypeScript
+        run: npm run typecheck
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Run browser smoke tests
+        run: npm run test:browser
+      - name: Commit tested dependency lockfile
+        working-directory: .
+        run: |
+          git add web/package-lock.json
+          if git diff --cached --quiet; then
+            echo "No lockfile change"
+          else
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "Record Playwright browser testing dependency"
+            git push origin HEAD:testing/browser-smoke-tests
+          fi
