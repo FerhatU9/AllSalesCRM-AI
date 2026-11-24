@@ -63,7 +63,7 @@ def verify_access_token(token: str) -> VerifiedIdentity:
             options={"require": ["exp", "iat", "iss", "aud", "sub"]},
             leeway=30,
         )
-    except (URLError, TimeoutError, OSError) as exc:
+    except (jwt.PyJWKClientConnectionError, URLError, TimeoutError, OSError) as exc:
         raise HTTPException(status_code=503, detail="Identity provider is unavailable") from exc
     except jwt.PyJWTError as exc:
         raise HTTPException(status_code=401, detail="Invalid access token") from exc

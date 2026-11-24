@@ -86,3 +86,32 @@ def test_no_empty_token():
     with pytest.raises(HTTPException) as exc:
         auth.verify_access_token("")
     assert exc.value.status_code == 401
+
+
+def test_jwks_provider_outage_returns_service_unavailable(oidc, monkeypatch):
+    """PyJWT wraps JWKS network failures; they are not invalid credentials."""
+
+    class OfflineJwks:
+        def get_signing_key_from_jwt(self, _token):
+            raise jwt.PyJWKClientConnectionError("test-only-unreachable-jwks")
+
+    monkeypatch.setattr(auth, "jwks_client", lambda _url: OfflineJwks())
+    with pytest.raises(HTTPException) as exc:
+        auth.verify_access_token(oidc())
+    assert exc.value.status_code == 503
+    assert exc.value.detail == "Identity provider is unavailable"
+    assert "test-only-unreachable-jwks" not in exc.value.detail
+
+
+def test_missing_signing_key_is_still_unauthorized(oidc, monkeypatch):
+    """A token with an unknown key must not be treated as an outage."""
+
+    class UnknownKeyJwks:
+        def get_signing_key_from_jwt(self, _token):
+            raise jwt.PyJWKClientError("No matching signing key")
+
+    monkeypatch.setattr(auth, "jwks_client", lambda _url: UnknownKeyJwks())
+    with pytest.raises(HTTPException) as exc:
+        auth.verify_access_token(oidc())
+    assert exc.value.status_code == 401
+    assert exc.value.detail == "Invalid access token"

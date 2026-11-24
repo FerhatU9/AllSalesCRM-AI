@@ -21,7 +21,7 @@ GitHub Pages publishing is configured in `.github/workflows/site.yml`. The repos
 | AI explanations | Optional model-generated explanation of derived lead decisions | Advisory; does not override Python scoring |
 | Account identity | OIDC token verification and organization memberships | Next.js/Auth0 login code exists; live sign-in is not yet verified |
 | Lead record API | Organization-scoped create, list, read and update; role checks and activity history | Next.js pages use this API; real identity-provider login is not yet tested |
-| Quality checks | Automated Python tests, model evaluation and UI scenario records | Not a production security or reliability certification |
+| Quality checks | Python and PostgreSQL tests, Playwright unauthenticated browser checks, CodeQL analysis, model evaluation and synthetic UI records | Live Auth0 sign-in and a complete customer workflow are not yet verified |
 
 ## How it works
 

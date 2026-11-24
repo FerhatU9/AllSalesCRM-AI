@@ -57,7 +57,7 @@ export default async function OrganizationWorkspace({params,searchParams}:Props)
         <section className="panel">
           <h2>Lead records</h2>
           <div className="lead-list">
-            {leads.length===0 && <div className="empty-state">No sample leads available yet.</div>}
+            {!error && leads.length===0 && <div className="empty-state">No sample leads available yet.</div>}
             {leads.map(lead=>(
               <article key={lead.id} className="lead-row">
                 <div className="lead-row-top">

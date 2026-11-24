@@ -18,7 +18,7 @@
 - An earlier source package recorded **66 passing offline tests**. This is **historical evidence**, not the current test count.
 - The saved dual-model evaluation contains 34 final responses across 17 questions per model, **after retries**; the essential policy facts were manually marked correct, with documented limitations.
 - Five synthetic local UI scenarios were recorded for the earlier Streamlit demonstration.
-- GitHub Actions checks exercise Python 3.11, 3.12, frontend TypeScript/production build and a disposable PostgreSQL test database. Consult current workflow runs for their latest results.
+- GitHub Actions checks exercise Python 3.11 and 3.12, a frontend TypeScript/production build, Chromium Playwright browser smoke tests for public pages and unauthenticated workspace redirects, disposable PostgreSQL integration tests, and CodeQL analysis for Python and JavaScript/TypeScript. Consult current workflow runs for their latest results. These checks do not establish a live Auth0 user journey.
 
 See the [evaluation report](EVALUATION_RESULTS.md), [local validation](LOCAL_VALIDATION.md), [lead activity guide](LEAD_ACTIVITY.md), and [local onboarding](LOCAL_ONBOARDING.md).
 
