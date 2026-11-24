@@ -156,6 +156,10 @@ Read the [evaluation report](docs/EVALUATION_RESULTS.md), [reviewed responses](d
 | `docs/` | Architecture, setup, verification evidence and planned work |
 | `Dockerfile` and `compose.yaml` | Local-only container setup |
 
+## Product development sequence
+
+The agreed implementation order is **real Auth0/PostgreSQL login and lead persistence → local n8n approval-based automation → usable multi-user CRM → LangGraph AI workflows with company-scoped knowledge → secured Azure staging → controlled business pilot**. n8n, LangGraph and Azure are **planned**, not implemented customer services. Detailed work packages and completion tests are in the [product roadmap](docs/PRODUCTION_PLAN.md).
+
 ## Roadmap to a usable product
 
 The intended first commercial milestone is a **controlled pilot for one consenting business**, followed by broader rollout only after the required security and operational checks. The [working roadmap](docs/PRODUCTION_PLAN.md) is organized around hands-on VS Code implementation and tested user journeys; the [architecture reference](docs/COMMERCIAL_ARCHITECTURE.md) distinguishes existing components from planned technologies.

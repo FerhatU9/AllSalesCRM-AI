@@ -42,9 +42,9 @@ flowchart LR
 | Data | SQLAlchemy, Alembic, organization-scoped leads and activity records | Proper tenant isolation, migrations, recovery, retention and authorization |
 | AI | Dify Chatflows for Gemini/Claude | Approved company-scoped retrieval, source-span citations, evaluation and abstention |
 | Decision logic | Deterministic lead qualification | Versioned, approved rules independent from LLM-generated text |
-| Workflow automation | No integrated live CRM workflow | Sandbox integration, authentication, explicit approvals, idempotent actions |
+| Workflow automation | No integrated live CRM workflow | Local n8n follow-up test after full sign-in; backend authorization, explicit approval, retries and idempotency |
 | Reliability | GitHub CI, disposable PostgreSQL integration, local Docker configuration | Browser tests, staging, observability, alerting, restore drills and security review |
-| Deployment | Local-only startup restriction | Controlled hosting only after documented identity, data protection and operational gates |
+| Deployment | Local-only startup restriction | Evaluate Azure Container Apps, managed PostgreSQL, Key Vault and Azure Monitor for controlled staging after local gates |
 
 ## Product security boundaries
 
@@ -56,7 +56,9 @@ The product still needs comprehensive company-level access enforcement, privacy 
 
 The developer implements and runs meaningful product steps in VS Code with clear guidance about **what**, **why** and **how**. Record observed behavior and tests before calling a feature complete. Repository maintenance can be handled separately; it does not replace learning how the actual technologies work.
 
-Choose additional tools only when they solve demonstrated product needs. LangGraph, n8n, OpenTelemetry, Playwright and managed cloud services are possible future additions, not capabilities currently verified.
+The agreed sequence is: **verify the authenticated CRM foundation → add n8n follow-up automation with explicit approval → complete the sales workspace → introduce organization-scoped LangGraph AI workflows → stage the application on Azure → run a controlled pilot**. See [roadmap](PRODUCTION_PLAN.md) for concrete tests and release gates. This sequence does not mean these additional technologies are already implemented.
+
+n8n is the first **new** integration after the real Auth0/PostgreSQL journey; no scheduled or external outbound activity is enabled by default. LangGraph orchestrates justified multi-step AI logic; FastAPI retains the authorization boundary, and all external actions require recorded approval. Azure Container Apps and managed PostgreSQL are staging candidates only after local testing and cost approval. Kubernetes and complex distributed infrastructure remain deferred.
 
 ## Related documentation
 
