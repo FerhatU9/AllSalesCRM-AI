@@ -67,7 +67,7 @@ Start FastAPI from the repository root:
 Then start the web application from `web/`:
 
 ```powershell
-npm install
+npm ci
 npm run typecheck
 npm run dev
 ```

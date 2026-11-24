@@ -1,115 +1,121 @@
 # AllSales CRM — Product development roadmap
 
-This is the working plan for developing AllSales CRM into a product that can be operated by a business. **Do not use real customer data or deploy publicly while the security and operational gates remain incomplete.**
+This roadmap guides AllSales CRM from its **local, synthetic-data prototype** to a secure, usable B2B sales application. The first commercial goal is a controlled pilot with one consenting organization, not a premature public SaaS launch.
 
-## How we will work
+**Current safety boundary:** Use fictional leads and synthetic company policies only. Do not expose the development FastAPI/Streamlit services publicly, upload customer data, enable unattended outreach, or remove `ALLSALES_ENV=local` safeguards until the security and operational requirements are demonstrated.
 
-The developer builds and operates the product in VS Code, with the assistant guiding implementation. At each task, the assistant will:
+## Development approach
 
-1. Explain **what** will change, **why** it matters, and **which technology** is involved in plain language.
-2. Identify the actual files and provide precise commands or edits, without presenting already-written code as a completed hands-on learning experience.
-3. Have the developer run the application, inspect real outputs, and share failures or results.
-4. Verify the result with automated tests **and** a working user journey before marking the task complete.
-5. Keep work focused on the product: no artificial exercises, repeated setup, inflated progress claims, or unnecessary technologies.
+The developer performs the product implementation in VS Code with guided explanations of **what the technology does, why it is used and how to validate it**. Repository maintenance may be done through reviewed commits. For each milestone, record real output, run automated tests and demonstrate the working user journey. Do not label a milestone complete solely because code was committed or CI passed.
 
-The assistant may handle explicitly requested repository maintenance. Product development should remain hands-on, with the developer implementing and understanding meaningful changes. Credentials must stay in local environment files or a proper secrets manager, never in chat or GitHub.
+## Starting state — implemented vs. demonstrated
 
-## Verified starting point
-
-| Component | Current evidence | Limitation |
+| Capability | Current evidence | What remains |
 | --- | --- | --- |
-| Streamlit policy and qualification demo | Implemented Python UI and FastAPI demo endpoints; recorded synthetic scenarios | Shared local development token; not a customer-facing application |
-| Gemini and Claude | Separate Dify Chatflows and recorded evaluation results | Knowledge-index reproduction and live service reliability are not proven |
-| Next.js application | Landing page, Auth0 SDK integration and organization/lead pages; CI checks TypeScript and builds | No verified sign-in to a real Auth0 development tenant |
-| Identity and permissions | FastAPI checks signed OIDC tokens and organization memberships; offline tests | Live login, invitations, account administration and end-to-end controls remain incomplete |
-| Lead records | SQLAlchemy models and Alembic migrations; synthetic PostgreSQL integration tests | No production deployment, real CRM integration or row-level security |
-| Lead activity | Activity records and owner/admin API, backed by automated tests | Not tamper-proof or a complete operational audit service |
-| Containers | Local-only Dockerfile and Compose configuration | No verified fresh-machine container startup |
+| Policy assistant and lead qualification | Streamlit, FastAPI, deterministic rules, Dify Gemini/Claude workflows, synthetic evaluations | Integrate safely into the authenticated customer workspace |
+| Web interface | Next.js/TypeScript workspace, Auth0 SDK, lead screens, passing build | Live Auth0 account and full browser-to-database journey unverified |
+| Security and permissions | Signed OIDC token checks, organization membership validation, regression tests | Live identity-provider integration, account administration and defense in depth |
+| Data storage | SQLAlchemy, Alembic, lead activity and disposable PostgreSQL integration tests | Dedicated local development database and verified persistence journey |
+| Developer operations | Docker configuration, CI, reproducible npm lockfile, Playwright unauthenticated smoke tests, CodeQL | Fresh-machine onboarding, authenticated browser tests, backups and monitoring |
+| n8n, LangGraph, Azure hosting | Selected for future features | **Not yet integrated into this product** |
 
-Tests validate only what they actually exercise. The public repository and successful CI builds do not establish commercial readiness.
+## Milestone 1 — End-to-end CRM foundation (start here)
 
-## Phase 1 — End-to-end local user journey
+**Technology:** Next.js, Auth0, FastAPI, SQLAlchemy, Alembic, PostgreSQL and Docker.
 
-**Goal:** Reproduce a working application using a real development account and fictional data.
+**Business goal:** An authorized person can create and manage fictional company leads through one usable browser interface.
 
-- On the developer's machine: verify Python, Node.js, Docker and repository state.
-- Start a dedicated local PostgreSQL database, apply Alembic migrations and provision a fictional organization using the existing local-only script.
-- Configure an Auth0 development tenant and API audience without exposing credentials.
-- Start FastAPI and Next.js, sign in, display permitted organizations, create/update a synthetic lead and confirm persistence after restart.
-- Fix actual integration failures as they arise; record the steps needed to reproduce the result.
+Implementation order:
 
-**Exit gate:** A complete browser-to-FastAPI-to-PostgreSQL journey works with a real development identity, and unauthorized access is denied. A successful TypeScript build alone does not count.
+1. Inspect the developer's current Git branch, local changes and installed Python, Node.js and Docker tools. Do not reset or overwrite local changes.
+2. Run a dedicated **loopback-only** PostgreSQL development database. Use existing migrations and verify schema creation and connectivity.
+3. Set up an Auth0 development **Regular Web Application** and API audience. Keep all credentials in ignored local environment files.
+4. Provision one fictional organization for the exact verified identity, using the existing development-only provisioning script.
+5. Start FastAPI and Next.js; sign in using a real development account. Create a synthetic lead, update it, sign out/in and restart the services to verify persistence.
+6. Verify an unassigned identity and a viewer cannot perform prohibited actions. Record failures and the exact reproducible commands in the onboarding guide.
 
-## Phase 2 — Complete the core sales workspace
+**Exit gate:** Browser → Auth0 → FastAPI → PostgreSQL works end-to-end; persistence and authorization tests pass. Offline unit tests and a frontend build alone do not satisfy this gate.
 
-**Goal:** Make the authenticated interface usable without manually calling APIs.
+## Milestone 2 — n8n automation with explicit approval
 
-- Improve the lead list with search, filters and status management; add clear error and empty states.
-- Integrate existing activity history in the interface with role-based access.
-- Add controlled invitations and membership administration with explicit authorization.
-- Define business requirements and validation for lead records, lifecycle and organization boundaries.
-- Write browser-level tests for representative authorized and unauthorized user journeys.
+**Technology:** n8n in a **local test environment**, authenticated FastAPI webhook integration and the existing organization permissions.
 
-**Exit gate:** A user can complete the core sales workflow through the browser, and another organization cannot read or modify their records.
+**Business goal:** A sales user prepares a lead follow-up reminder, reviews its details and explicitly approves execution.
 
-## Phase 3 — Integrate the AI policy assistant safely
+Implementation order:
 
-**Goal:** Bring the existing Gemini/Claude Dify workflows into an authenticated product without leaking company data.
+1. Run n8n locally; leave all schedules and external integrations inactive by default.
+2. Specify the follow-up request, permissions and audit record in FastAPI. Do not let the frontend or n8n infer authorization from a user-supplied organization ID.
+3. Build a minimal synthetic-data webhook workflow with a manual trigger or approved request. Do not embed customer details, bearer tokens or API credentials in workflow files or logs.
+4. Enforce approval and an idempotency key on the backend before an action can execute. Start with a local test notification or database event—**no real email, outreach or CRM update**.
+5. Test approved, rejected, expired, duplicate and failed executions, including retries and safe reporting.
 
-- Connect the policy assistant to the verified identity and company workspace.
-- Provision approved company-specific knowledge; enforce access before retrieval.
-- Add trustworthy passage-level source references, evidence checks and abstention behavior.
-- Compare models on reviewed cases, including misleading documents, prompt injection, unsupported questions, failure handling, latency and cost.
-- Keep deterministic scoring and human policy approvals separate from model text.
+**Exit gate:** One authorized, approved test action executes exactly once. Rejections, missing approvals and unauthorized requests do not produce side effects. Workflow executions are auditable.
 
-**Exit gate:** An authorized account receives supported answers only from permitted material. Cross-company retrieval attempts and unsafe model actions fail automated tests.
+## Milestone 3 — Usable CRM workspace
 
-## Phase 4 — Approved business workflows
+**Technology:** Next.js, FastAPI, PostgreSQL and Playwright.
 
-**Goal:** Implement useful automation while keeping people in control.
+**Business goal:** Sales representatives and managers can manage their pipeline without API tools.
 
-- Start with a CRM sandbox integration and read-only synchronization; validate data mapping and consent.
-- Introduce explicit approval before CRM updates, outreach, discount-related decisions or other side effects.
-- Add idempotency, retry behavior, permissions and activity records to external actions.
-- Evaluate **LangGraph** for controlled multi-step agent decisions and **n8n** for approved integrations only if a concrete workflow justifies them.
-- The developer builds and runs each workflow, inspects inputs/outputs and explains how the components connect.
+Implement filtering and searching leads, a usable status pipeline, activity history with role restrictions, clear failure and empty states, controlled invitations and organization membership administration. Improve accessibility and responsive UI without weakening backend checks.
 
-**Exit gate:** Real side effects cannot occur without the required authenticated human approval. Duplicate actions and failures are tested.
+**Exit gate:** Real browser tests show authorized users completing core lead tasks, viewers remaining read-only and cross-organization requests being denied.
 
-## Phase 5 — Production reliability and security
+## Milestone 4 — LangGraph-powered, evidence-based sales intelligence
 
-**Goal:** Prepare a controlled staging environment, not immediately a public multi-company service.
+**Technology:** LangGraph, the existing Dify/Gemini/Claude work, approved document retrieval and AI evaluation. Consider pgvector only if search requirements justify it.
 
-- Make dependency installs reproducible; review and test security updates.
-- Add browser and integration tests, rate limits, secure authorization, company data isolation and appropriate database safeguards.
-- Implement structured logging and tracing with redaction; evaluate OpenTelemetry and operational alerting.
-- Test secret rotation, backups, restore, incident handling, migrations and rollback.
-- Threat-model authentication, policy retrieval, LLM output and external actions; obtain an appropriate independent security review.
-- Review privacy needs, customer consent, data retention, deletion and processor arrangements before processing real information.
+**Business goal:** Provide grounded, explainable sales-policy assistance and useful lead recommendations while keeping humans in control.
 
-**Exit gate:** Staging operations, authorization boundaries, recoverability and security acceptance criteria are demonstrated with evidence.
+First secure organization-specific source retrieval and credible passage-level citations. Add abstention on unsupported answers and measure answer quality, leakage, prompt-injection resistance, latency and cost. Then use LangGraph for a **specific multi-step workflow**: gather permitted context, evaluate deterministic lead rules, draft a recommendation and request approval before invoking n8n. Never treat model text as permission to access data or perform side effects.
 
-## Phase 6 — Controlled business pilot
+**Exit gate:** Traceable results reference authorized evidence. Cross-company retrieval is denied; unsupported answers abstain and unapproved actions do not execute. Failures and cost are measured.
 
-**Goal:** Verify that one consenting company can use the product responsibly and obtains measurable value.
+## Milestone 5 — Azure staging and production engineering
 
-- Agree on permitted data, use cases, acceptance criteria, support and incident ownership.
-- Onboard users and approved knowledge, with monitoring and human-approval controls.
-- Measure answer quality, task completion, availability, customer feedback, cost and maintenance effort.
-- Fix pilot issues and secure customer acceptance before considering broad multi-company rollout and billing.
+**Candidates:** Azure Container Apps, Azure Database for PostgreSQL Flexible Server, Azure Key Vault, Azure Monitor / Application Insights and GitHub Actions.
 
-**Exit gate:** A functioning, securely operated pilot with documented acceptance—not just deployed code.
+**Business goal:** Deploy an operable, secured staging environment for fictional data—not an internet-facing multi-tenant production launch.
 
-## Technology decisions
+Before provisioning, select a subscription, region and estimated budget; set spending alerts, cost caps where supported and a documented shutdown plan. Containerize the actual Next.js/FastAPI services, configure network boundaries and managed secrets, add structured observability and alerts, and verify migration, rollback, backup and restore procedures. Review security and privacy implications, especially data location and vendor agreements.
 
-**Already in the codebase:** Python, FastAPI, Streamlit, Next.js, TypeScript, SQLAlchemy, Alembic, PostgreSQL tests, Auth0 SDK integration, Dify, Gemini/Claude workflows, Docker configuration and GitHub Actions.
+**Exit gate:** Repeatable staging deployment, recoverability, monitoring and access controls are demonstrated, with bounded and understood cloud costs.
 
-**Candidates for later stages, not implemented merely by listing them:** Playwright for browser journeys; OpenTelemetry for tracing; database row-level security; a managed cloud platform; LangGraph for justified agent workflows; n8n for approved integrations; background workers when actual asynchronous needs appear.
+## Milestone 6 — Controlled commercial pilot
 
-No Kubernetes, additional model framework, message broker, billing service or external CRM integration should be added without a verified requirement.
+Complete vulnerability remediation, security assessment, privacy and retention/deletion controls, support procedures and service monitoring. Agree in advance with a consenting pilot customer on permitted data, use cases, measurement and incident ownership. Measure workflow completion, grounded-answer quality, time saved, reliability, model spend and customer feedback.
 
-## Next hands-on task
+**Exit gate:** A real business accepts the limited pilot against documented requirements. General SaaS sales, billing and broader rollout are separate decisions after this milestone.
 
-**Phase 1, first step:** Inspect the local VS Code project and installed tools, then bring up a dedicated PostgreSQL development database. Only after the developer verifies the database and migrations should the project proceed to real Auth0 sign-in.
+## Technology priorities
 
-Start with [local onboarding](LOCAL_ONBOARDING.md) and [customer web setup](CUSTOMER_WEB.md). Review [current project status](PROJECT_STATUS.md) after each completed milestone.
+| Technology | Decision | Reason |
+| --- | --- | --- |
+| PostgreSQL, Docker, Next.js, Auth0 and FastAPI | **Now:** integrate and verify what already exists | Deliver a working core CRM |
+| n8n | **First new technology**, once Milestone 1 passes | Practical, human-approved sales automation |
+| Playwright | Already present; expand coverage during the workspace work | Browser-level proof of behavior |
+| LangGraph | After the core workflow and n8n approval boundary work | Multi-step AI orchestration with measurable value |
+| Azure | After local behavior and safeguards are verified | Staging operations, secure infrastructure and cloud skills |
+| Kubernetes, Kafka, complex microservices | Defer | Complexity not justified by current scale |
+
+## Immediate hands-on task
+
+From the **AllSales CRM repository root in VS Code**, use Windows PowerShell to inspect the environment without changing project files:
+
+```powershell
+git fetch origin
+git status -sb
+git branch --show-current
+git rev-parse HEAD
+git rev-parse origin/main
+
+docker --version
+docker ps
+py --version
+node --version
+```
+
+**Do not run `git reset`, `git pull` or remove local files** until local branches and modifications have been reviewed, because this project previously had a Git history rewrite. Do not share secrets from `.env` files.
+
+Once this is inspected, follow [local database onboarding](LOCAL_ONBOARDING.md) and [customer login setup](CUSTOMER_WEB.md). Only then configure and test the real PostgreSQL and Auth0 journey.
