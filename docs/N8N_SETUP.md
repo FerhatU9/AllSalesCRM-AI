@@ -1,6 +1,6 @@
 # Local n8n setup
 
-**Status:** Setup instructions; AllSales CRM integration is not yet implemented or tested. Use fictional data only.
+**Status:** Local n8n editor and read-only FastAPI health connectivity demonstrated; authenticated workflow integration is not yet implemented. Use fictional data only.
 
 ## Isolated development instance
 
@@ -16,6 +16,10 @@ docker logs --tail 30 allsales-n8n
 ```
 
 Open http://localhost:5679 and configure the separate local n8n owner account. Use a unique password; do not reuse Auth0 credentials. If the container already exists, inspect it before running `docker start allsales-n8n`. Do not remove the named volume: it stores workflows, credentials and configuration. The pinned image is for local learning, not a claim of current production security. Review upstream security updates and licensing before any commercial use. See [official Docker installation](https://docs.n8n.io/hosting/installation/docker/).
+
+## Observed connectivity
+
+The developer created a dedicated local n8n owner account and manually executed a Manual Trigger, Edit Fields (JSON) and HTTP Request sequence. The request to `http://host.docker.internal:8001/health` returned `status: ok` and `version: 0.8.0` without changing the loopback binding. This checks process connectivity only; it does not authorize access to CRM data or perform an action. The sample approval fields are not trusted authorization evidence.
 
 ## First workflow
 
