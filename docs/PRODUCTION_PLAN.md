@@ -13,13 +13,15 @@ The developer performs the product implementation in VS Code with guided explana
 | Capability | Current evidence | What remains |
 | --- | --- | --- |
 | Policy assistant and lead qualification | Streamlit, FastAPI, deterministic rules, Dify Gemini/Claude workflows, synthetic evaluations | Integrate safely into the authenticated customer workspace |
-| Web interface | Next.js/TypeScript workspace, Auth0 SDK, lead screens, passing build | Live Auth0 account and full browser-to-database journey unverified |
-| Security and permissions | Signed OIDC token checks, organization membership validation, regression tests | Live identity-provider integration, account administration and defense in depth |
-| Data storage | SQLAlchemy, Alembic, lead activity and disposable PostgreSQL integration tests | Dedicated local development database and verified persistence journey |
+| Web interface | Next.js/TypeScript workspace, Auth0 SDK, lead screens, passing build | Authenticated browser automation and independent security validation |
+| Security and permissions | Signed OIDC token checks, organization membership validation, regression tests | Live viewer-token write rejection, account administration and defense in depth |
+| Data storage | SQLAlchemy, Alembic, lead activity and disposable PostgreSQL integration tests | Database restart/restore validation and production data protection |
 | Developer operations | Docker configuration, CI, reproducible npm lockfile, Playwright unauthenticated smoke tests, CodeQL | Fresh-machine onboarding, authenticated browser tests, backups and monitoring |
 | n8n, LangGraph, Azure hosting | Selected for future features | **Not yet integrated into this product** |
 
-## Milestone 1 — End-to-end CRM foundation (start here)
+## Milestone 1 — End-to-end CRM foundation (local demonstration complete)
+
+Developer-observed login/logout, organization membership, lead creation/update, persistence across sessions, unassigned user restriction and viewer UI checks are recorded in [project status](PROJECT_STATUS.md). Offline tests passed. Direct live-token negative writes and confirmation of the dedicated PostgreSQL CI check remain follow-up security evidence before deployment.
 
 **Technology:** Next.js, Auth0, FastAPI, SQLAlchemy, Alembic, PostgreSQL and Docker.
 
@@ -36,7 +38,9 @@ Implementation order:
 
 **Exit gate:** Browser → Auth0 → FastAPI → PostgreSQL works end-to-end; persistence and authorization tests pass. Offline unit tests and a frontend build alone do not satisfy this gate.
 
-## Milestone 2 — n8n automation with explicit approval
+## Milestone 2 — n8n automation with explicit approval (current)
+
+Use a separate local instance and volume; see [n8n setup](N8N_SETUP.md).
 
 **Technology:** n8n in a **local test environment**, authenticated FastAPI webhook integration and the existing organization permissions.
 
@@ -92,8 +96,8 @@ Complete vulnerability remediation, security assessment, privacy and retention/d
 
 | Technology | Decision | Reason |
 | --- | --- | --- |
-| PostgreSQL, Docker, Next.js, Auth0 and FastAPI | **Now:** integrate and verify what already exists | Deliver a working core CRM |
-| n8n | **First new technology**, once Milestone 1 passes | Practical, human-approved sales automation |
+| PostgreSQL, Docker, Next.js, Auth0 and FastAPI | Maintain the demonstrated local foundation | Deliver a working core CRM |
+| n8n | **Current:** first new integration | Practical, human-approved sales automation |
 | Playwright | Already present; expand coverage during the workspace work | Browser-level proof of behavior |
 | LangGraph | After the core workflow and n8n approval boundary work | Multi-step AI orchestration with measurable value |
 | Azure | After local behavior and safeguards are verified | Staging operations, secure infrastructure and cloud skills |
@@ -101,21 +105,4 @@ Complete vulnerability remediation, security assessment, privacy and retention/d
 
 ## Immediate hands-on task
 
-From the **AllSales CRM repository root in VS Code**, use Windows PowerShell to inspect the environment without changing project files:
-
-```powershell
-git fetch origin
-git status -sb
-git branch --show-current
-git rev-parse HEAD
-git rev-parse origin/main
-
-docker --version
-docker ps
-py --version
-node --version
-```
-
-**Do not run `git reset`, `git pull` or remove local files** until local branches and modifications have been reviewed, because this project previously had a Git history rewrite. Do not share secrets from `.env` files.
-
-Once this is inspected, follow [local database onboarding](LOCAL_ONBOARDING.md) and [customer login setup](CUSTOMER_WEB.md). Only then configure and test the real PostgreSQL and Auth0 journey.
+Start the isolated n8n instance using [n8n setup](N8N_SETUP.md). Verify the editor opens before building a manual synthetic workflow. Do not publish schedules, connect real email or bypass FastAPI authorization. No additional AI orchestration or cloud deployment is needed for this step.

@@ -26,8 +26,8 @@ flowchart LR
 **Important distinctions:**
 
 - The Streamlit demo uses a shared local development token. It is not a production login mechanism.
-- The Next.js code includes Auth0 integration and passes frontend builds, but a **real Auth0 browser login has not been verified**.
-- The FastAPI lead and account endpoints verify bearer tokens and check organization memberships. PostgreSQL integration is tested against a disposable CI database, not a production service.
+- The Next.js code includes Auth0 integration and passes frontend builds, but a real Auth0 browser login and synthetic lead journey have been demonstrated locally.
+- The FastAPI lead and account endpoints verify bearer tokens and check organization memberships. Local PostgreSQL lead persistence was demonstrated across sessions; a separate disposable PostgreSQL CI workflow covers migration and isolation checks. Neither is a production service.
 - The authenticated Next.js workspace does **not** yet include the Dify policy assistant. The synthetic Dify knowledge is not organization-aware.
 - Lead activity events exist, but no immutable/tamper-resistant operational audit service has been demonstrated.
 - Docker Compose currently runs the local FastAPI/Streamlit demo, **not** a fully configured Next.js/Auth0/PostgreSQL product.
@@ -38,11 +38,11 @@ flowchart LR
 | --- | --- | --- |
 | Browser experience | Next.js pages plus separate Streamlit demo | Complete authenticated workflow and tested permission-aware UI |
 | API | FastAPI demo routes and authenticated account/lead routes | One consistently secured customer API; shared-token routes isolated from deployments |
-| Identity | Auth0 SDK code and FastAPI RS256 token verification | Live OIDC login, lifecycle, invitations and role administration tested |
+| Identity | Auth0 SDK code and FastAPI RS256 token verification | Token lifecycle, invitations, role administration and production identity security review |
 | Data | SQLAlchemy, Alembic, organization-scoped leads and activity records | Proper tenant isolation, migrations, recovery, retention and authorization |
 | AI | Dify Chatflows for Gemini/Claude | Approved company-scoped retrieval, source-span citations, evaluation and abstention |
 | Decision logic | Deterministic lead qualification | Versioned, approved rules independent from LLM-generated text |
-| Workflow automation | No integrated live CRM workflow | Local n8n follow-up test after full sign-in; backend authorization, explicit approval, retries and idempotency |
+| Workflow automation | No integrated live CRM workflow | Local n8n follow-up test next; backend authorization, explicit approval, retries and idempotency |
 | Reliability | GitHub CI, disposable PostgreSQL integration, local Docker configuration | Browser tests, staging, observability, alerting, restore drills and security review |
 | Deployment | Local-only startup restriction | Evaluate Azure Container Apps, managed PostgreSQL, Key Vault and Azure Monitor for controlled staging after local gates |
 

@@ -1,6 +1,6 @@
 # Customer web workspace
 
-**Status:** Implemented as a local-development web frontend. Live Auth0 sign-in, a real PostgreSQL service and a complete user journey have not yet been independently tested. This is not a launched SaaS product.
+**Status:** Implemented as a local-development web frontend. A developer-observed browser journey demonstrated live development Auth0 sign-in/logout, local PostgreSQL lead creation and updates, and owner/viewer presentation. Independent security validation remains outstanding. This is not a launched SaaS product.
 
 ## What is included
 
@@ -26,7 +26,10 @@ Create a Regular Web Application in Auth0 and register:
 - Allowed callback URL: `http://localhost:3000/auth/callback`
 - Allowed logout URL: `http://localhost:3000`
 - Allowed web origin: `http://localhost:3000`
+- Authorize the Regular Web Application for user-delegated access to the custom API if its application access policy requires a client grant. Machine-to-machine access is not needed for interactive sign-in.
 - API audience: e.g. `https://api.allsales.local` (an identifier, not a public API URL)
+
+Use one browser origin consistently. If using `http://127.0.0.1:3000`, configure its exact `/auth/callback` URL and allowed logout redirect (including the trailing slash if requested by the SDK). The issuer and JWKS URL must use HTTPS and the same actual tenant host, regardless of region.
 
 Use the Auth0 domain, client ID and client secret from that application. Do not paste these credentials into GitHub issues or commit them.
 
@@ -74,6 +77,12 @@ npm run dev
 
 Open `http://localhost:3000`. Sign in to see your assigned organizations, then view or change synthetic leads where your membership role allows it.
 
+## Verified local configuration
+
+The demonstrated development environment uses frontend `127.0.0.1:3000`, FastAPI `127.0.0.1:8001` and PostgreSQL on host port `5434`. These differ from the generic defaults above. Match `APP_BASE_URL`, `BACKEND_INTERNAL_URL`, the Uvicorn port and `DATABASE_URL` to the actual running services. Do not overwrite existing configuration or commit secrets.
+
+A 404 on the account-list page may indicate the wrong backend port; a 503 may indicate invalid OIDC settings, signing-key connectivity or database failure. Use the API response details and server logs to distinguish these cases. An empty organization list for a valid unassigned identity is expected.
+
 ## Data and security boundaries
 
 - API access tokens stay on the Next.js server and are sent only to the configured local FastAPI service. They must never be placed in `NEXT_PUBLIC_` variables.
@@ -83,8 +92,8 @@ Open `http://localhost:3000`. Sign in to see your assigned organizations, then v
 - The frontend does not implement invitation approval, tenant provisioning, persistent CRM integrations, document upload or billing.
 - The existing Streamlit routes still use a separate shared development token; they must never be exposed to customers.
 - Frontend and backend are loopback-only in this milestone. The backend URL explicitly rejects remote hosts.
-- Use fictional data only; perform live Auth0 and PostgreSQL integration testing before claiming operational readiness.
+- Use fictional data only; retain local-only restrictions until production security and operational tests pass.
 
 ## Next work
 
-Implement controlled account provisioning and invitations, a real Auth0 browser-to-PostgreSQL test, a policy assistant with organization-scoped retrieval, production-quality audit integrity, rate limiting, UI error/empty-state testing, and managed deployment only after security review. Disposable PostgreSQL integration tests and basic lead activity storage already exist.
+Implement controlled account provisioning and invitations, repeatable authenticated browser tests, live-token negative write checks, a policy assistant with organization-scoped retrieval, production-quality audit integrity, rate limiting, UI error/empty-state testing, and managed deployment only after security review. Disposable PostgreSQL integration tests and basic lead activity storage already exist.
