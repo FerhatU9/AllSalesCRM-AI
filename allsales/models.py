@@ -138,3 +138,76 @@ def list_memberships(session: Session, *, issuer: str, subject: str) -> list[tup
         .order_by(Organization.slug)
     )
     return list(session.execute(statement).all())
+
+class FollowupRequest(Base):
+    """Human-approved follow-up requests for synthetic leads."""
+
+    __tablename__ = "followup_requests"
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'approved', 'rejected', 'executed')",
+            name="ck_followup_status",
+        ),
+        UniqueConstraint(
+            "lead_id",
+            "request_key",
+            name="uq_followup_request",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+
+    lead_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("leads.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+
+    request_key: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        nullable=False,
+    )
+
+    requested_by_identity_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("identities.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+
+    decided_by_identity_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("identities.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="pending",
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+
+    decided_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    executed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
