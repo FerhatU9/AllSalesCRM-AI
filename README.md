@@ -19,9 +19,9 @@ GitHub Pages publishing is configured in `.github/workflows/site.yml`. The repos
 | Sales-policy Q&A | Gemini and Claude through separate Dify Chatflows | Requires externally configured Dify knowledge and API keys |
 | Lead qualification | Deterministic scoring, priority, team routing, follow-up and escalation | Local Streamlit demo; recommendations only |
 | AI explanations | Optional model-generated explanation of derived lead decisions | Advisory; does not override Python scoring |
-| Account identity | OIDC token verification and organization memberships | Next.js/Auth0 login code exists; live sign-in is not yet verified |
-| Lead record API | Organization-scoped create, list, read and update; role checks and activity history | Next.js pages use this API; real identity-provider login is not yet tested |
-| Quality checks | Python and PostgreSQL tests, Playwright unauthenticated browser checks, CodeQL analysis, model evaluation and synthetic UI records | Live Auth0 sign-in and a complete customer workflow are not yet verified |
+| Account identity | OIDC token verification and organization memberships | Local development Auth0 sign-in/logout demonstrated |
+| Lead record API | Organization-scoped create, list, read and update; role checks and activity history | Local browser lead creation, updates and owner/viewer presentation demonstrated |
+| Quality checks | Python and PostgreSQL tests, Playwright unauthenticated browser checks, CodeQL analysis, model evaluation and synthetic UI records | 118 local tests passed; dedicated PostgreSQL CI test skipped locally; no production security validation |
 
 ## How it works
 
@@ -47,7 +47,7 @@ flowchart TD
     Q --> N
 ```
 
-The Streamlit demo uses a **shared local development token**. The separate Next.js workspace has Auth0 session code; its FastAPI account and lead routes verify OIDC tokens and organization memberships. The full browser login and database journey **has not been tested with a live identity provider**. The authenticated workspace does not yet include the Dify policy assistant. Dify supplies document labels, not verified passage-level citations.
+The Streamlit demo uses a **shared local development token**. The separate Next.js workspace has Auth0 session code; its FastAPI account and lead routes verify OIDC tokens and organization memberships. The browser login and synthetic lead journey have been demonstrated locally with a live development identity provider. The authenticated workspace does not yet include the Dify policy assistant. Dify supplies document labels, not verified passage-level citations.
 
 ### Lead qualification example
 
@@ -83,7 +83,7 @@ Follow [local development onboarding](docs/LOCAL_ONBOARDING.md) to configure and
 
 ## Customer web workspace
 
-A new **Next.js + Auth0 customer workspace** is under development. It provides a landing page, hosted sign-in, an organizations list and organization-scoped synthetic lead screens, with server-side calls to the authenticated FastAPI endpoints. It is **not yet connected to a live Auth0 tenant or validated end-to-end**; real customer data and public deployment remain prohibited. Read the [customer web setup guide](docs/CUSTOMER_WEB.md).
+A new **Next.js + Auth0 customer workspace** is under development. It provides a landing page, hosted sign-in, an organizations list and organization-scoped synthetic lead screens, with server-side calls to the authenticated FastAPI endpoints. Local developer testing demonstrated sign-in/logout, organization membership, lead creation/update and read-only viewer presentation. Real customer data and public deployment remain prohibited. Read the [customer web setup guide](docs/CUSTOMER_WEB.md).
 
 ## Run the local demo
 
@@ -127,9 +127,11 @@ The organization-scoped lead API is **separate from the Streamlit demo**. It req
 2. An explicitly configured OIDC issuer, API audience and HTTPS JWKS URL.
 3. Provider-issued RS256 access tokens and provisioned organization memberships.
 
-The API offers organization listing plus lead list/create/read/update endpoints, with role checks and organization-scoped queries. It does **not** offer public self-registration or invitation management; the Next.js login interface exists in code but has not been verified with a real Auth0 tenant. See [identity/database setup](docs/IDENTITY_AND_DATABASE.md) and [lead API reference](docs/LEAD_STORAGE.md).
+The API offers organization listing plus lead list/create/read/update endpoints, with role checks and organization-scoped queries. It does **not** offer public self-registration or invitation management; the Next.js login interface has been demonstrated with a development Auth0 tenant. See [identity/database setup](docs/IDENTITY_AND_DATABASE.md) and [lead API reference](docs/LEAD_STORAGE.md).
 
 ## Testing and evidence
+
+The latest recorded local run reported **118 passed, 1 skipped, 4 warnings, 21 subtests passed**. The skipped test requires an isolated PostgreSQL CI database. See [project status](docs/PROJECT_STATUS.md) for the manual browser results and remaining security checks.
 
 | Evidence | What it supports |
 | --- | --- |
@@ -158,13 +160,13 @@ Read the [evaluation report](docs/EVALUATION_RESULTS.md), [reviewed responses](d
 
 ## Product development sequence
 
-The agreed implementation order is **real Auth0/PostgreSQL login and lead persistence → local n8n approval-based automation → usable multi-user CRM → LangGraph AI workflows with company-scoped knowledge → secured Azure staging → controlled business pilot**. n8n, LangGraph and Azure are **planned**, not implemented customer services. Detailed work packages and completion tests are in the [product roadmap](docs/PRODUCTION_PLAN.md).
+The agreed implementation order is **real Auth0/PostgreSQL login and lead persistence → local n8n approval-based automation → usable multi-user CRM → LangGraph AI workflows with company-scoped knowledge → secured Azure staging → controlled business pilot**. The local CRM demonstration is complete; [isolated n8n setup](docs/N8N_SETUP.md) is the next hands-on task. n8n integration, LangGraph and Azure are **planned**, not implemented customer services. Detailed work packages and completion tests are in the [product roadmap](docs/PRODUCTION_PLAN.md).
 
 ## Roadmap to a usable product
 
 The intended first commercial milestone is a **controlled pilot for one consenting business**, followed by broader rollout only after the required security and operational checks. The [working roadmap](docs/PRODUCTION_PLAN.md) is organized around hands-on VS Code implementation and tested user journeys; the [architecture reference](docs/COMMERCIAL_ARCHITECTURE.md) distinguishes existing components from planned technologies.
 
-- **Identity and onboarding:** Real browser login, token lifecycle, organization invitations and provisioning.
+- **Identity and onboarding:** Token lifecycle, organization invitations and production-ready provisioning.
 - **Secure company workspaces:** Extend authorization to the entire application and knowledge retrieval; add database-level isolation and audit trails.
 - **Operational workflows:** Approved CRM integrations, human authorization before writes, error handling and recovery.
 - **Reliable AI:** Passage-level citations, expanded evaluation, provider cost tracking and failure monitoring.
