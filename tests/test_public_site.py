@@ -96,7 +96,9 @@ class PublicSiteTests(unittest.TestCase):
     def test_no_exaggerated_deployment_claims(self):
         self.assertIn("Not a live CRM service", self.html)
         self.assertIn("Synthetic", self.html)
-        self.assertIn("live login unverified", self.html)
+        self.assertIn("Local authenticated journey demonstrated", self.html)
+        self.assertIn("independent security review", self.html)
+        self.assertIn("not yet one publicly deployed service", self.html)
         self.assertNotIn("Start free trial", self.html)
         self.assertNotIn("Trusted by", self.html)
 
