@@ -1,6 +1,14 @@
 "use server";
 import { auth0 } from "@/lib/auth0";
-import { changeLeadStatus, createLead, validId, type Lead } from "@/lib/backend";
+import {
+  changeLeadStatus,
+  createLead,
+  validId,
+  createFollowupRequest,
+  resolveFollowupRequest,
+  BackendError,
+  type Lead,
+} from "@/lib/backend";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -44,4 +52,86 @@ export async function updateLeadStatus(orgId:string,leadId:string,formData:FormD
   }
   revalidatePath("/workspace/" + orgId);
   redirect(location(orgId,"updated"));
+}
+function followupLocation(
+  orgId: string,
+  leadId: string,
+  notice?: string
+) {
+  const path = `/workspace/${orgId}/leads/${leadId}/followups`;
+
+  return notice ? `${path}?notice=${notice}` : path;
+}
+
+export async function requestFollowupAction(
+  orgId: string,
+  leadId: string,
+  requestKey: string,
+  _formData: FormData
+): Promise<void> {
+  await requireSession();
+
+  if (!validId(orgId) || !validId(leadId) || !validId(requestKey)) {
+    redirect("/workspace");
+  }
+
+  try {
+    await createFollowupRequest(orgId, leadId, requestKey);
+  } catch (err) {
+    redirect(
+      followupLocation(
+        orgId,
+        leadId,
+        err instanceof BackendError && err.status === 409
+          ? "conflict"
+          : "failed"
+      )
+    );
+  }
+
+  revalidatePath(followupLocation(orgId, leadId));
+
+  redirect(followupLocation(orgId, leadId, "created"));
+}
+
+export async function decideFollowupAction(
+  orgId: string,
+  leadId: string,
+  followupId: string,
+  formData: FormData
+): Promise<void> {
+  await requireSession();
+
+  if (!validId(orgId) || !validId(leadId) || !validId(followupId)) {
+    redirect("/workspace");
+  }
+
+  const decision = formData.get("decision");
+
+  if (decision !== "approved" && decision !== "rejected") {
+    redirect(followupLocation(orgId, leadId, "invalid"));
+  }
+
+  try {
+    await resolveFollowupRequest(
+      orgId,
+      leadId,
+      followupId,
+      decision
+    );
+  } catch (err) {
+    redirect(
+      followupLocation(
+        orgId,
+        leadId,
+        err instanceof BackendError && err.status === 409
+          ? "conflict"
+          : "failed"
+      )
+    );
+  }
+
+  revalidatePath(followupLocation(orgId, leadId));
+
+  redirect(followupLocation(orgId, leadId, decision));
 }

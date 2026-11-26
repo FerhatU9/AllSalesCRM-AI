@@ -83,3 +83,67 @@ export async function createLead(orgId:string, input:{company_name:string;summar
 export async function changeLeadStatus(orgId:string,leadId:string,status:Lead["status"]):Promise<Lead> {
   return apiRequest<Lead>(leadPath(orgId,leadId),{method:"PATCH",body:JSON.stringify({status})});
 }
+export type Followup = {
+  id: string;
+  lead_id: string;
+  request_key: string;
+  status: "pending" | "approved" | "rejected" | "executed";
+  created_at: string;
+  expires_at: string;
+  decided_at: string | null;
+  executed_at: string | null;
+};
+
+export type FollowupDecision = "approved" | "rejected";
+
+export async function getLead(
+  orgId: string,
+  leadId: string
+): Promise<Lead> {
+  return apiRequest<Lead>(leadPath(orgId, leadId));
+}
+
+export async function listFollowups(
+  orgId: string,
+  leadId: string
+): Promise<Followup[]> {
+  return apiRequest<Followup[]>(
+    leadPath(orgId, leadId) + "/followups"
+  );
+}
+
+export async function createFollowupRequest(
+  orgId: string,
+  leadId: string,
+  requestKey: string
+): Promise<Followup> {
+  return apiRequest<Followup>(
+    leadPath(orgId, leadId) + "/followups",
+    {
+      method: "POST",
+      body: JSON.stringify({ request_key: requestKey }),
+    }
+  );
+}
+
+export async function resolveFollowupRequest(
+  orgId: string,
+  leadId: string,
+  followupId: string,
+  decision: FollowupDecision
+): Promise<Followup> {
+  if (!validId(followupId)) {
+    throw new BackendError(404, "Invalid follow-up identifier.");
+  }
+
+  return apiRequest<Followup>(
+    leadPath(orgId, leadId) +
+      "/followups/" +
+      followupId +
+      "/decision",
+    {
+      method: "POST",
+      body: JSON.stringify({ decision }),
+    }
+  );
+}

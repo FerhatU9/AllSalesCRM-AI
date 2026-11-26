@@ -64,6 +64,15 @@ export default async function OrganizationWorkspace({params,searchParams}:Props)
                   <h3>{lead.company_name}</h3><span className="status">{lead.status}</span>
                 </div>
                 {lead.summary && <p>{lead.summary}</p>}
+
+<div className="inline-form">
+  <Link
+    className="button"
+    href={`/workspace/${orgId}/leads/${lead.id}/followups`}
+  >
+    Follow-ups
+  </Link>
+</div>
                 {canWrite && !error && (
                   <form className="inline-form" action={updateLeadStatus.bind(null,orgId,lead.id)}>
                     <label className="visually-hidden" htmlFor={"status-"+lead.id}>New status for {lead.company_name}</label>
