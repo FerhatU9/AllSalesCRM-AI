@@ -19,6 +19,7 @@ from allsales.auth import VerifiedIdentity, get_verified_identity
 from allsales.models import list_memberships
 from allsales.storage import session_factory
 from backend.lead_routes import router as leads_router
+from backend.followup_routes import router as followups_router
 from allsales.lead_qualification import LeadInput, LeadDecision, evaluate_lead
 
 load_dotenv()
@@ -181,3 +182,4 @@ def account_organizations(identity: VerifiedIdentity = Depends(get_verified_iden
 
 # These endpoints require a verified OIDC identity; legacy demo routes remain separate.
 app.include_router(leads_router)
+app.include_router(followups_router)
