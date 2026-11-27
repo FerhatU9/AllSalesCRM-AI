@@ -51,11 +51,19 @@ def create_followup(
     session=Depends(safe_session),
 ):
     membership = scoped_membership(
-        session, identity, organization_id, write=True
+        session, identity, organization_id
     )
 
+    if membership.role not in {
+        "owner", "admin", "sales", "automation"
+    }:
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient permissions",
+        )
+
     lead = scoped_record(
-        session, identity, organization_id, lead_id, write=True
+        session, identity, organization_id, lead_id
     )
 
     requester_id = membership.identity_id
@@ -103,7 +111,6 @@ def create_followup(
         session.commit()
     except IntegrityError:
         session.rollback()
-
         existing = find_existing()
 
         if existing is not None:

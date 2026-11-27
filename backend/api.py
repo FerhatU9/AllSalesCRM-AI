@@ -173,6 +173,7 @@ def account_organizations(identity: VerifiedIdentity = Depends(get_verified_iden
                     {"id": str(organization.id), "name": organization.display_name,
                      "slug": organization.slug, "role": role}
                     for organization, role in memberships
+                    if identity.allows_role(role)
                 ]
             }
     except (SQLAlchemyError, RuntimeError, ValueError) as exc:

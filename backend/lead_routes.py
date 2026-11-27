@@ -45,13 +45,27 @@ class LeadView(BaseModel):
 
 def scoped_membership(session, identity: VerifiedIdentity, org_id: UUID, *, write=False):
     membership = find_membership(
-        session, issuer=identity.issuer, subject=identity.subject, organization_id=org_id
+        session,
+        issuer=identity.issuer,
+        subject=identity.subject,
+        organization_id=org_id,
     )
-    # For nonmembers, don't expose whether the requested organization or record exists.
+
     if membership is None:
         raise HTTPException(status_code=404, detail="Not found")
+
+    if not identity.allows_role(membership.role):
+        raise HTTPException(
+            status_code=403,
+            detail="Identity is not authorized for this role",
+        )
+
     if write and membership.role not in WRITE_ROLES:
-        raise HTTPException(status_code=403, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient permissions",
+        )
+
     return membership
 
 
