@@ -1,6 +1,6 @@
 # Project status and limitations
 
-**Snapshot: November 27, 2026.** Local development prototype using synthetic sales policies, fictional leads and a local development Auth0 tenant. The [technical engineering report](AllSales_CRM_Technical_Report.pdf) consolidates evidence and remaining release gates.
+**Snapshot: November 27, 2026.** Local development prototype using synthetic sales policies, fictional leads and a local development Auth0 tenant. The [technical engineering report](AllSales_CRM_Technical_Report.pdf) records the earlier approval-stage snapshot (1409a49); this status page includes the subsequent execution milestone.
 
 ## Main foundation
 
@@ -12,24 +12,24 @@
 
 ## Follow-up feature — validated locally, not merged
 
-[Draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32), validated implementation snapshot [1409a49](https://github.com/FerhatU9/AllSalesCRM-AI/commit/1409a499ef7be81ca4c7ed17597b6b1c8ed32598):
+[Draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32), validated implementation snapshot [acd7af2](https://github.com/FerhatU9/AllSalesCRM-AI/commit/acd7af2b66cee07fe2d9430c0c035cc0d42e54c4):
 
 - Migrations 004 and 005 add follow-up requests and the restricted automation membership role.
 - Organization-scoped follow-up creation/listing, UUID request key, 24-hour expiry, owner/admin decisions, and lead qualification checks.
 - Dedicated follow-up UI in the authenticated Next.js workspace. Owner approved/rejected synthetic requests; viewer could read but could not request.
-- Auth0 machine identity with `request:followups` scope and database membership can read assigned demo organizations/leads and create pending requests. Machine approval attempt returned HTTP 403; machine lead writes are denied.
-- n8n manual workflow verified health, organization lookup, qualified lead filtering, request creation, same-key retry, human approval and status retrieval. Final workflow filter retained one matching approved item. No execution endpoint or external delivery.
-- See [reconstruction guide](FOLLOWUP_AUTOMATION.md) and [n8n setup](N8N_SETUP.md).
+- Auth0 machine identity with `request:followups` and separately authorized `execute:followups` scopes and database membership can read assigned demo organizations/leads and create pending requests. Machine approval attempt returned HTTP 403; machine lead writes are denied.
+- n8n manual workflow verified health, organization lookup, qualified lead filtering, request creation, same-key retry, human approval and status retrieval. Final workflow filter retained one matching approved item; the execution endpoint returned `executed`. Execution updates the follow-up record only, with no external delivery. Backend authorization, expiry, qualification and requester ownership checks protect the transition; repeated execution returns the stored result.
+- The [sanitized importable workflow](../n8n-workflows/sales_followup_automation.json) has passed static contract checks. Fresh n8n import remains unverified. See [import guide](FOLLOWUP_AUTOMATION.md) and [n8n setup](N8N_SETUP.md).
 
 ## Recorded evidence
 
 | Evidence | Result and limitation |
 | --- | --- |
-| Local focused Python regression | 20 passed; separate signed-token automation access check 1 passed |
-| GitHub Actions at 1409a49 | 5/5: Python, web, browser smoke, PostgreSQL integration and CodeQL |
+| Local full Python regression at acd7af2 | 121 passed, 1 skipped, 7 warnings, 21 subtests passed (developer-observed; before template addition) |
+| GitHub Actions at acd7af2 | 5/5: Python, web, browser smoke, PostgreSQL integration and CodeQL |
 | Local PostgreSQL | Migration 005 applied; real local synthetic lead and follow-up data persisted |
 | Local human identity journey | Login/logout; creation/update; persistence across sessions; unassigned identity, cross-organization 404, viewer presentation; owner approval/rejection |
-| Local machine journey | Successful token, restricted organization, request, 403 approval denial, approved-result verification |
+| Local machine journey | Successful token, restricted organization, request, 403 approval denial, approved-result verification and database-only execution |
 | Dual-model evaluation | 34 final answers across 17 curated questions/model after retries; correct essential facts in manual review, with completeness and reference limitations |
 | Earlier local baseline | 118 passed, 1 skipped, 4 warnings, 21 subtests passed; historical, not a current total |
 | Earlier source package | 66 passing offline tests; historical baseline |
@@ -38,7 +38,7 @@ The dedicated PostgreSQL CI workflow covers migrations and lead isolation. Follo
 
 ## Remaining gates
 
-- Review the draft feature and sanitized reproducible n8n export; implement a separately authorized, idempotent internal execution simulation with negative/concurrency tests. No scheduled execution or real outreach.
+- Reproduce the sanitized template on an isolated n8n workflow; review least-privilege Auth0 grants, the draft feature and full PostgreSQL execution concurrency/ownership and changed-lead-state cases. No scheduled execution or real outreach.
 - Self-service organization onboarding, invitations, role administration, full authenticated browser automation and live-token negative write tests.
 - Organization-specific Dify retrieval, independently reproduced knowledge index, grounded source-span citations, abstention and leakage evaluation.
 - Database-enforced tenant isolation, tamper-resistant audit retention, independent security/privacy assessment.

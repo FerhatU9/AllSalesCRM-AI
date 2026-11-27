@@ -56,7 +56,7 @@ The endpoint returns only organizations with memberships matching the cryptograp
 
 ## Machine identity (draft feature)
 
-Migration 005 adds the `automation` membership role. On the [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), a signed Auth0 machine token requires `request:followups` and a restricted organization membership. The synthetic provisioning script and n8n guide are documented in [follow-up automation](FOLLOWUP_AUTOMATION.md). Machine actors can read scoped leads and request follow-ups, but cannot write leads or decide requests.
+Migration 005 adds the `automation` membership role. On the [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), a signed Auth0 machine token requires `request:followups` and a restricted organization membership. The synthetic provisioning script and n8n guide are documented in [follow-up automation](FOLLOWUP_AUTOMATION.md). Machine actors can read scoped leads and request follow-ups, but cannot write leads or decide requests. Execution requires the additional `execute:followups` scope and the original automation requester; approval, qualification and expiry are enforced by FastAPI. Executed retries return the stored record, and no external delivery occurs.
 
 ## Next milestone
 

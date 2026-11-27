@@ -96,7 +96,7 @@ A 404 on the account-list page may indicate the wrong backend port; a 503 may in
 
 ## Follow-up review (draft feature)
 
-The [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval) adds a dedicated per-lead follow-up page. Owners/admins can decide a pending, unexpired request where backend checks allow it; viewers can read the history without request or decision controls. A local owner approved and rejected synthetic requests, and the restricted n8n machine identity was denied when attempting to approve. See the [automation guide](FOLLOWUP_AUTOMATION.md). No execution or external delivery is implemented; the feature remains a draft PR.
+The [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval) adds a dedicated per-lead follow-up page. Owners/admins can decide a pending, unexpired request where backend checks allow it; viewers can read the history without request or decision controls. A local owner approved and rejected synthetic requests, and the restricted n8n machine identity was denied when attempting to approve. See the [automation guide](FOLLOWUP_AUTOMATION.md). The machine-only endpoint implements authorized database-only execution; no external delivery is implemented; the feature remains a draft PR.
 
 ## Next work
 

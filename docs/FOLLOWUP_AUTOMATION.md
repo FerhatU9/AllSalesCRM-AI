@@ -1,140 +1,120 @@
 # Authenticated follow-up automation — local demonstration
 
-**Status (November 27, 2026):** implemented and locally validated on the [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), code snapshot [1409a49](https://github.com/FerhatU9/AllSalesCRM-AI/commit/1409a499ef7be81ca4c7ed17597b6b1c8ed32598), [draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32). The feature is not merged into main. This guide reconstructs the manually demonstrated workflow; it is not a portable n8n export. See the [technical report](AllSales_CRM_Technical_Report.pdf) for architecture and recorded evidence.
+**Status (November 27, 2026):** Locally demonstrated on the [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), code snapshot [acd7af2](https://github.com/FerhatU9/AllSalesCRM-AI/commit/acd7af2b66cee07fe2d9430c0c035cc0d42e54c4), [draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32). The feature is not merged. The [technical report](AllSales_CRM_Technical_Report.pdf) records the earlier approval-stage snapshot (1409a49). This guide includes the subsequent execution milestone.
 
 ## 1. What the workflow proves
 
-A machine identity can read assigned demo organizations and qualified leads, create a **pending** follow-up request, and retrieve its approval status. Only a verified organization owner or administrator can approve or reject it. A successful n8n status check is not delivery: no execution endpoint, external notification or real CRM write is enabled.
+A restricted automation identity can read its assigned demo organization and qualified leads, create a pending follow-up, retrieve the human decision and execute its own approved request. Only a verified organization owner or administrator can approve or reject requests. **Execution changes only the follow-up database record. No email, customer outreach, external notification or scheduled job is enabled.**
 
-The request key is a UUID, unique per lead. A valid repeated request with the same key and requester returns the existing record (HTTP 200); a new request returns HTTP 201. Reuse the same key for retries, not a fresh UUID. Conflicting requesters are rejected. Pending requests expire after 24 hours; approval requires a still-qualified lead.
+New requests use a UUID request key unique per lead (HTTP 201). Retrying the same key with the same requester returns the existing record (HTTP 200). Another requester using the key is denied. Requests expire after 24 hours; approval and initial execution require a currently qualified lead and an unexpired request. Executed retries return the persisted result without changing its execution timestamp.
 
-## 2. Prepare the development environment
+## 2. Prepare the local environment
 
-- Use the feature branch, an active local virtual environment, local PostgreSQL, and the working Auth0 web application from [local onboarding](LOCAL_ONBOARDING.md) and [customer web setup](CUSTOMER_WEB.md).
-- Prepare the fictional `allsales-demo` organization, an owner identity and a qualified lead named **Nordvale Technologies** through the CRM workspace.
-- Use the isolated [local n8n instance](N8N_SETUP.md). Verified ports: web 3000, FastAPI 8001, PostgreSQL 5434 and n8n 5679. Do not expose services publicly.
+- Use the feature branch, active Python virtual environment, local PostgreSQL, and development Auth0 web application from [local onboarding](LOCAL_ONBOARDING.md) and [customer web setup](CUSTOMER_WEB.md).
+- Prepare the fictional `allsales-demo` organization with a human owner/admin and **exactly one** qualified synthetic lead named Nordvale Technologies.
+- Run the isolated [n8n instance](N8N_SETUP.md); observed local ports: web 3000, FastAPI 8001, PostgreSQL 5434 and n8n 5679. Do not expose local services publicly.
 
-From the repository root in PowerShell:
+From the project root in PowerShell:
 
 ```powershell
 python -m alembic upgrade head
 python -m alembic current
 ```
 
-Expected feature-branch revision: `005_automation_membership (head)` at the validated snapshot.
+Expected feature branch revision: `005_automation_membership (head)`.
 
 ## 3. Configure Auth0 and restricted membership
 
-1. In the development Auth0 dashboard, create a distinct **Machine to Machine Application** for automation. Do not reuse the Regular Web Application.
-2. Under the custom CRM API's **Permissions**, add `request:followups`. Under **Application Access**, edit the automation application and grant the permission in **Client Access** (not User-Delegated Access). The automation application's client access should show 1/1 permissions granted. Other clients do not need this machine grant unless independently justified.
-3. Copy the automation application's own Client ID and Client Secret from its Settings to the local n8n credential. Never paste the secret into a command, repository, screenshot or workflow JSON.
-4. Assign the machine identity to the synthetic organization using the guarded script:
+1. Use a dedicated development Auth0 **Machine to Machine Application**, not the Regular Web Application for interactive users.
+2. Under the CRM API's **Permissions**, define `request:followups` (create pending follow-ups) and `execute:followups` (execute approved follow-ups). Under **Application Access**, grant both permissions under **Client Access** for the dedicated automation application only where needed. Do not grant anonymous access or unnecessary user-delegated scopes; review other client grants and keep any unrelated permissions required by their verified use cases.
+3. Use the machine application's own Client ID and secret in the local n8n credential manager. Never reveal the secret in a screenshot, command, repository or workflow export.
+4. Provision the database-backed membership in the demo organization using the guarded local script:
 
 ```powershell
 python -m scripts.provision_automation_identity --confirm-synthetic
 ```
 
-Enter the automation **Client ID** when prompted (not its secret). The script checks for a local database, requires the existing `allsales-demo` organization, and refuses conflicting memberships. Expected role: `automation`. No Auth0 Organization Support toggle is required for this application's database-backed membership.
+Enter the automation application's **Client ID**, not its secret. The script checks for a local database and an existing `allsales-demo` organization, and refuses conflicting memberships. Expected role: `automation`.
 
-The API validates signed RS256 access tokens, issuer, audience, time claims and subject. A machine identity has a subject ending in `@clients`; it needs both the required scope and its automation membership. The audience is an identifier, not a network destination.
+The backend validates signed RS256 access tokens, issuer, audience, time claims and subject. A machine identity has a subject ending in `@clients` and requires the relevant token scopes and organization membership. The execution endpoint additionally checks requester ownership, approval metadata, expiry and qualification on the initial transition.
 
-## 4. Configure n8n credential
+## 4. Configure the n8n OAuth2 API credential
 
-Create a generic **OAuth2 API** credential named `AllSales CRM Automation`.
+Create or update the local generic **OAuth2 API** credential named AllSales CRM Automation.
 
 | Field | Value |
 | --- | --- |
 | Grant type | Client Credentials |
-| Access token URL | `https://YOUR_TENANT.us.auth0.com/oauth/token` (use the exact tenant domain) |
-| Client ID / Client Secret | From the automation application |
-| Scope | `request:followups` |
+| Access token URL | `https://YOUR_TENANT.us.auth0.com/oauth/token` (use exact tenant domain) |
+| Client ID / Client Secret | From your dedicated automation application |
+| Scope | `request:followups execute:followups` |
 | Authentication | Body (client secret post) |
-| Audience | `https://api.allsales.local` — send in the token request's additional body parameters using your n8n version's credential UI |
+| Audience | `https://api.allsales.local` — send in the token request's additional body parameters using your n8n credential UI |
 
-Use the exact API identifier configured in Auth0 and FastAPI. The example audience is not an HTTP request URL. Store credentials only in the local n8n credential manager. A token exchange with `access_denied` / “Client has not been granted scopes” means the machine application's **Client Access** grant must be checked; creating the API permission or granting user-delegated access alone is insufficient.
+Use the exact audience configured in Auth0 and FastAPI. It is an identifier, not an HTTP destination. A token exchange with `access_denied` or “Client has not been granted scopes” requires checking the machine application's **Client Access** grant rather than relaxing backend permissions.
 
-## 5. Build the nine-node local workflow
+## 5. Import the ten-node workflow
 
-Connect each node to the next. Keep the workflow manual and unpublished. For authenticated HTTP Request nodes, select Generic Credential Type → OAuth2 API → AllSales CRM Automation. Use Expression mode for URLs containing `{{ ... }}`.
+The [credential-free JSON template](../n8n-workflows/sales_followup_automation.json) is derived from the locally demonstrated export. Local credential IDs, original request UUID, workflow instance IDs and pinned data were removed; the workflow is inactive by default. A static contract test checks the graph and approval filter. The sanitized version still needs a fresh n8n import/run to establish reproducibility.
 
-| Step | Node | Configuration / purpose |
+1. Open the isolated local n8n editor (`http://localhost:5679`), create a **new workflow**, then use its three-dot menu → **Import → From file**. Choose `n8n-workflows/sales_followup_automation.json` from the feature branch. Do not overwrite your working original.
+2. On the five protected HTTP Request nodes (List Assigned Organizations, List Demo Leads, Request Sales Follow-up, Check Follow-up Status, Execute Approved Follow-up), select Generic Credential Type → OAuth2 API → AllSales CRM Automation. The health node remains unauthenticated.
+3. Generate a new UUID in PowerShell:
+
+```powershell
+[guid]::NewGuid().ToString()
+```
+
+4. In **Demo Configuration**, replace `REPLACE_WITH_NEW_UUID` with that value. Keep it unchanged through creation, approval and retries; generate a new key only for an intentional new request. Keep the company name set to the unique fictional lead. The placeholder deliberately fails server UUID validation if left unchanged.
+5. Leave the workflow manual and unpublished. Verify there is exactly one matching qualified lead before proceeding beyond the lead filter. This is a one-lead demonstration; generalizing requires per-item linkage and stable per-lead keys rather than `.first()`.
+
+| Order | Node | Function |
 | --- | --- | --- |
-| 1 | Manual Trigger | Explicit local run |
-| 2 | Edit Fields | Fictional example fields only; never permissions or approval proof |
-| 3 | HTTP Request | GET `http://host.docker.internal:8001/health`, no credential; process health |
-| 4 | HTTP Request1 | GET `http://host.docker.internal:8001/v1/account/organizations`, OAuth2; find assigned organizations |
-| 5 | List Demo Leads | GET organization-scoped leads using expression below |
-| 6 | Filter Qualified Leads | String conditions: status = qualified AND company_name = Nordvale Technologies |
-| 7 | Request Sales Follow-up | POST scoped follow-ups endpoint; send JSON request_key |
-| 8 | Check Follow-up Status | GET scoped follow-ups endpoint; returns list of stored requests |
-| 9 | Verify Approved Request | Keep only matching request ID AND status approved |
+| 1 | Manual Trigger | Explicit manual run |
+| 2 | Demo Configuration | Fictional company name and stable request key |
+| 3 | Check API Health | GET /health |
+| 4 | List Assigned Organizations | GET /v1/account/organizations with OAuth2 |
+| 5 | List Demo Leads | GET /v1/organizations/{organization_id}/leads |
+| 6 | Filter Qualified Leads | Qualified status and exact demo company name |
+| 7 | Request Sales Follow-up | POST scoped /followups with UUID request_key |
+| 8 | Check Follow-up Status | GET scoped /followups |
+| 9 | Verify Approved Request | Both returned ID matches the just-requested ID and status equals approved |
+| 10 | Execute Approved Follow-up | POST scoped /followups/{followup_id}/execute, without a body |
 
-**List Demo Leads — URL**
+## 6. Run and verify safely
 
-```text
-http://host.docker.internal:8001/v1/organizations/{{ $json.organizations.find(o => o.slug === 'allsales-demo' && o.role === 'automation').id }}/leads
-```
+1. Run the workflow manually with the new stable UUID. Verify Request Sales Follow-up returns `pending` and the approval filter returns no items. No execution should occur.
+2. Sign in to the local CRM as the organization owner/admin. Open the specific demo lead's follow-up page and deliberately approve that exact pending request.
+3. Rerun with the **same** request key. The create node should retrieve the existing request; the approval filter should retain only its matching approved record. The execute node should return status `executed` and a populated `executed_at`.
+4. Rerun the complete workflow again. The same request returns `executed`, so the approval filter retains zero items. No new request or execution is expected. Replaying the execute API call directly with the same authorized requester is also covered by automated same-result retry tests.
 
-First confirm exactly one matching organization exists; if not, stop and check membership. This expression deliberately selects the synthetic demonstration organization.
-
-**Filter Qualified Leads — conditions (AND)**
-
-- `{{ $json.status }}` equals `qualified`
-- `{{ $json.company_name }}` equals `Nordvale Technologies`
-
-**Request Sales Follow-up — URL and body**
+The execution endpoint is:
 
 ```text
-http://host.docker.internal:8001/v1/organizations/{{ $json.organization_id }}/leads/{{ $json.id }}/followups
+POST /v1/organizations/{organization_id}/leads/{lead_id}/followups/{followup_id}/execute
 ```
 
-Enable Send Body → JSON → Using Fields Below; field `request_key` is a UUID string. Generate one with PowerShell `[guid]::NewGuid().ToString()`. Copy that single demo value into the node and keep it unchanged on retries. Use a different value only for an intentionally new request. The key is a deduplication identifier, not a credential.
+To verify backend retry behavior separately, repeat the execution node with the same authorized approved-item input from the previous successful run and compare the returned ID and timestamp. Do not change approval, tenant or requester data to force a result. No live repeated timestamp comparison has yet been recorded.
 
-Execute up to the request node. Output includes `id`, `lead_id`, `request_key`, `status`, `created_at`, `expires_at`, `decided_at` and `executed_at`. Expect pending on a new request. In the local web CRM, sign in as the organization owner or admin, open the lead's follow-up page, and deliberately approve the specific synthetic pending request.
+## 7. Authorization and failure checks
 
-**Check Follow-up Status — URL**
-
-```text
-http://host.docker.internal:8001/v1/organizations/{{ $('Filter Qualified Leads').first().json.organization_id }}/leads/{{ $json.lead_id }}/followups
-```
-
-This expression is intentionally limited to a single filtered demo lead. The response list may contain previous approved, rejected or pending requests; do not assume the first item is the current request.
-
-**Verify Approved Request — conditions (AND)**
-
-- `{{ $json.id }}` equals `{{ $('Request Sales Follow-up').first().json.id }}`
-- `{{ $json.status }}` equals `approved`
-
-Execute the final nodes after human approval. For the demonstrated one-lead workflow, the check returned three historical/current records and the final filter retained exactly one approved item. If no approved record matches, the result should be empty; do not execute an action. Generalizing to multiple leads requires per-item linkage and stable keys rather than `.first()`.
-
-## 6. Test the authorization boundary
-
-During development only, test a temporary HTTP Request node with the same machine credential:
-
-```text
-POST http://host.docker.internal:8001/v1/organizations/{{ $('Filter Qualified Leads').first().json.organization_id }}/leads/{{ $json.lead_id }}/followups/{{ $json.id }}/decision
-```
-
-JSON body: `{"decision":"approved"}`. The observed response is HTTP 403: “Only owners and administrators can decide follow-ups.” This is expected. Delete or disconnect this temporary test node when done so the normal workflow cannot attempt approval. Do not grant the machine identity owner/admin privileges.
-
-| Check | Expected / demonstrated behavior |
+| Scenario | Expected API outcome |
 | --- | --- |
-| Valid machine credential and membership | Only assigned fictional organization returned |
-| Qualified demo lead | Kept by filter |
-| First request, then same-key retry | One pending request; identical returned ID |
-| Machine decision | Denied with HTTP 403 |
-| Human owner approval | Stored approved decision |
-| Matching approved request | Exactly one retained item in final n8n demonstration |
-| Missing scope / wrong organization / lead write | Denied by backend; targeted tests |
-| Expired or decided request | Decision rejected; no execution enabled |
+| Missing bearer token | 401 |
+| Automation attempts to decide a follow-up | 403 (observed locally) |
+| Human caller, missing execution scope or different requester attempts execution | 403 |
+| Wrong scoped organization, lead or follow-up | 404 |
+| Pending, rejected or expired request; lead no longer qualified (first execution) | 409 |
+| Original machine executes its own approved, unexpired request on a qualified lead | 200, executed |
+| Original authorized machine retries executed request | 200, unchanged result |
 
-Local focused tests: 20 passed, plus one separate automation access test. CI succeeded for all five PR workflows at 1409a49. Follow-up and machine access are tested with SQLite API and signed-token cases, plus the observed local PostgreSQL integration. PostgreSQL CI is not a complete concurrency test of the follow-up lifecycle. Review the [automated test file at the validated commit](https://github.com/FerhatU9/AllSalesCRM-AI/blob/1409a499ef7be81ca4c7ed17597b6b1c8ed32598/tests/test_automation_access.py).
+The automation approval-denial test uses POST /followups/{followup_id}/decision with JSON `{"decision":"approved"}` on the synthetic record. It is **not** part of the normal workflow. Never grant an owner/admin membership to automation to resolve an expected 403.
 
-## 7. Remaining release gates
+## 8. Recorded evidence and remaining gates
 
-- Preserve the owner/admin decision boundary. Implement a separate authorized, retry-safe **internal simulation** for approved requests before considering real side effects.
-- Verify rejected, expired, conflicting, unauthorized and duplicate execution attempts, including PostgreSQL concurrency.
-- Export a reviewed, sanitized workflow definition with no credentials, personal identifiers, execution logs or private configuration; reproduce it on a clean local instance.
-- Maintain local-only services and synthetic data. No schedule, real email, external CRM integration or production deployment is authorized by this demonstration.
+- The developer's original local n8n workflow successfully returned `executed` after human approval, and machine approval was denied with 403.
+- At code snapshot acd7af2, the reported full local Python suite passed: **121 passed, 1 skipped, 7 warnings, 21 subtests passed**. All five PR CI workflows passed (Python, web, browser smoke, PostgreSQL integration, CodeQL).
+- [Execution tests](../tests/test_automation_access.py) cover scope, human caller, pending/rejected/expired cases, successful execution and identical retry result. [Template contract test](../tests/test_n8n_workflow.py) checks the sanitized JSON.
+- PostgreSQL CI covers migrations and lead isolation, not complete follow-up concurrency coverage. Fresh template import, verified least-privilege grants, direct live retry comparison and additional ownership/changed-lead-state and concurrency tests remain.
 
-See [project status](PROJECT_STATUS.md), [roadmap](PRODUCTION_PLAN.md) and [security policy](../SECURITY.md).
+Keep the integration local, synthetic and unpublished. Passing tests and a successful simulation do not demonstrate production readiness or external delivery. See [project status](PROJECT_STATUS.md) and [production plan](PRODUCTION_PLAN.md).

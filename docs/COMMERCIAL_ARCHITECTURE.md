@@ -34,7 +34,7 @@ flowchart LR
 
 ## Draft follow-up automation extension
 
-On the [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), n8n authenticates with its own Auth0 machine application. FastAPI checks signed token scope and the restricted organization membership. It reads permitted leads and creates pending requests. Owners/admins decide in the CRM; n8n reads the stored outcome. The automation identity cannot approve or update leads. The request lifecycle is persisted with migrations 004–005; no execution endpoint is present. The feature is locally demonstrated and subject to draft PR review. See the [workflow guide](FOLLOWUP_AUTOMATION.md) and [technical report](AllSales_CRM_Technical_Report.pdf).
+On the [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), n8n authenticates with its own Auth0 machine application. FastAPI checks signed token scope and the restricted organization membership. It reads permitted leads and creates pending requests. Owners/admins decide in the CRM; n8n reads the stored outcome. The automation identity cannot approve or update leads. The request lifecycle is persisted with migrations 004–005; the separately scoped execution endpoint records a retry-safe `executed` state for qualified, approved, unexpired requests owned by the machine requester. There is no external delivery. The feature is locally demonstrated and subject to draft PR review. See the [workflow guide](FOLLOWUP_AUTOMATION.md) and [technical report](AllSales_CRM_Technical_Report.pdf).
 
 ## Architecture decisions
 
@@ -46,7 +46,7 @@ On the [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/
 | Data | SQLAlchemy, Alembic, organization-scoped leads and activity records | Proper tenant isolation, migrations, recovery, retention and authorization |
 | AI | Dify Chatflows for Gemini/Claude | Approved company-scoped retrieval, source-span citations, evaluation and abstention |
 | Decision logic | Deterministic lead qualification | Versioned, approved rules independent from LLM-generated text |
-| Workflow automation | Draft PR #32: restricted Auth0 machine identity, tenant-scoped follow-up requests, human decisions and manual n8n result verification | Separately authorized idempotent simulation, tested rejection/expiry/concurrency, sanitized export; no external action |
+| Workflow automation | Draft PR #32: restricted Auth0 machine identity, tenant-scoped follow-up requests, human decisions, authorized database-only execution and sanitized n8n template | Fresh-import verification, full PostgreSQL concurrency and security review; no external action |
 | Reliability | GitHub CI, disposable PostgreSQL integration, local Docker configuration | Browser tests, staging, observability, alerting, restore drills and security review |
 | Deployment | Local-only startup restriction | Evaluate Azure Container Apps, managed PostgreSQL, Key Vault and Azure Monitor for controlled staging after local gates |
 

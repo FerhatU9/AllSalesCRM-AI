@@ -17,7 +17,7 @@ The developer performs the product implementation in VS Code with guided explana
 | Security and permissions | Signed OIDC token checks, organization membership validation, regression tests | Live viewer-token write rejection, account administration and defense in depth |
 | Data storage | SQLAlchemy, Alembic, lead activity and disposable PostgreSQL integration tests | Database restart/restore validation and production data protection |
 | Developer operations | Docker configuration, CI, reproducible npm lockfile, Playwright unauthenticated smoke tests, CodeQL | Fresh-machine onboarding, authenticated browser tests, backups and monitoring |
-| n8n | Draft feature locally demonstrates restricted machine credentials, pending requests, human decisions and approved-status verification | Safe internal execution simulation, sanitized export and concurrency tests |
+| n8n | Draft feature locally demonstrates restricted machine credentials, pending requests, human decisions, authorized database-only execution and sanitized export | Clean import reproduction, PostgreSQL concurrency tests and security review |
 | LangGraph, Azure hosting | Selected for future features | Not yet implemented |
 
 ## Milestone 1 — End-to-end CRM foundation (local demonstration complete)
@@ -39,7 +39,7 @@ Implementation order:
 
 **Exit gate:** Browser → Auth0 → FastAPI → PostgreSQL works end-to-end; persistence and authorization tests pass. Offline unit tests and a frontend build alone do not satisfy this gate.
 
-## Milestone 2 — n8n automation with explicit approval (current; approval boundary demonstrated)
+## Milestone 2 — n8n automation with explicit approval (current; approval and internal execution demonstrated)
 
 Use a separate local instance and volume; see [n8n setup](N8N_SETUP.md).
 
@@ -51,9 +51,9 @@ Implementation order:
 
 1. **Demonstrated locally:** run isolated n8n; leave schedules and external integrations inactive.
 2. **Implemented in draft PR #32:** persisted follow-up requests, scoped machine and human permissions, owner/admin decisions and idempotency.
-3. **Demonstrated locally:** manual n8n OAuth2, organization/lead lookup, qualified-lead filtering, request creation, human approval and matching-request status verification. Machine approval denied. See [reconstruction guide](FOLLOWUP_AUTOMATION.md). Workflow export remains outstanding.
-4. Enforce approval and an idempotency key on the backend before an action can execute. Start with a local test notification or database event—**no real email, outreach or CRM update**.
-5. Test approved, rejected, expired, duplicate and failed executions, including retries and safe reporting.
+3. **Demonstrated locally:** manual n8n OAuth2, organization/lead lookup, qualified-lead filtering, request creation, human approval and matching-request status verification and database-only execution. Machine approval denied. See [import guide](FOLLOWUP_AUTOMATION.md). The sanitized workflow template is included; fresh-import validation remains outstanding.
+4. **Implemented locally:** the backend requires a separately scoped machine identity, requester ownership, a human-approved unexpired request and a still-qualified lead. Execution updates the request status only—**no real email or outreach**.
+5. Automated tests cover successful execution, same-result retry, rejected/pending/expired requests and unauthorized callers. Reproduce the import and extend PostgreSQL concurrency, requester-ownership and changed-lead-state coverage.
 
 **Exit gate:** One authorized, approved test action executes exactly once. Rejections, missing approvals and unauthorized requests do not produce side effects. Workflow executions are auditable.
 
@@ -106,4 +106,4 @@ Complete vulnerability remediation, security assessment, privacy and retention/d
 
 ## Immediate hands-on task
 
-Continue from the locally demonstrated follow-up approval workflow on [draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32). First design a separately authorized, retry-safe internal execution simulation; enforce approved/unexpired state on the backend and test duplicate, rejected, expired and unauthorized attempts. Do not publish schedules, connect real email, bypass authorization or add cloud services yet. Review the [technical report](AllSales_CRM_Technical_Report.pdf) for the release gates.
+Continue from the locally demonstrated follow-up approval workflow on [draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32). First reproduce the sanitized manual workflow from its repository export, review least-privilege grants and extend execution concurrency and authorization coverage before proceeding with the customer workspace. Do not publish schedules, connect real email, bypass authorization or add cloud services yet. Review the [technical report](AllSales_CRM_Technical_Report.pdf) for the release gates.
