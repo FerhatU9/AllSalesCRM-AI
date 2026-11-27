@@ -233,3 +233,93 @@ def decide_followup(
     session.refresh(followup)
 
     return followup
+
+
+@router.post("/{followup_id}/execute", response_model=FollowupOut)
+def execute_followup(
+    organization_id: UUID,
+    lead_id: UUID,
+    followup_id: UUID,
+    identity: VerifiedIdentity = Depends(get_verified_identity),
+    session=Depends(safe_session),
+):
+    membership = scoped_membership(
+        session, identity, organization_id
+    )
+
+    if (
+        membership.role != "automation"
+        or not identity.is_machine
+        or "execute:followups" not in identity.scopes
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Execution permission required",
+        )
+
+    lead_status = session.scalar(
+        select(LeadRecord.status)
+        .where(
+            LeadRecord.id == lead_id,
+            LeadRecord.organization_id == organization_id,
+        )
+        .with_for_update()
+    )
+
+    if lead_status is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    followup = session.scalar(
+        select(FollowupRequest).where(
+            FollowupRequest.id == followup_id,
+            FollowupRequest.lead_id == lead_id,
+        )
+    )
+
+    if followup is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    if followup.requested_by_identity_id != membership.identity_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot execute another identity's request",
+        )
+
+    if followup.status == "executed":
+        return followup
+
+    if lead_status != "qualified":
+        raise HTTPException(
+            status_code=409,
+            detail="Lead is no longer qualified",
+        )
+
+    now = datetime.now(timezone.utc)
+
+    executed_id = session.scalar(
+        update(FollowupRequest)
+        .where(
+            FollowupRequest.id == followup_id,
+            FollowupRequest.status == "approved",
+            FollowupRequest.expires_at > now,
+            FollowupRequest.decided_at.is_not(None),
+            FollowupRequest.decided_by_identity_id.is_not(None),
+        )
+        .values(
+            status="executed",
+            executed_at=now,
+        )
+        .returning(FollowupRequest.id)
+        .execution_options(synchronize_session=False)
+    )
+
+    if executed_id is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Follow-up is not approved or has expired",
+        )
+
+    session.commit()
+    session.refresh(followup)
+
+    return followup

@@ -189,5 +189,108 @@ def test_automation_access(monkeypatch, tmp_path):
             assert approved.status_code == 200
             assert approved.json()["status"] == "approved"
 
+            # Execution security tests
+            executor_headers = headers(
+                "n8n-test@clients",
+                "request:followups execute:followups",
+                machine=True,
+            )
+
+            execute_url = decision_url.replace(
+                "/decision", "/execute"
+            )
+
+            # Request permission alone is insufficient.
+            assert client.post(
+                execute_url, headers=bot_headers
+            ).status_code == 403
+
+            # Human owners cannot use the automation endpoint.
+            assert client.post(
+                execute_url, headers=headers("owner-user")
+            ).status_code == 403
+
+            # Approved execution succeeds.
+            executed = client.post(
+                execute_url, headers=executor_headers
+            )
+
+            assert executed.status_code == 200, executed.text
+            assert executed.json()["status"] == "executed"
+            assert executed.json()["executed_at"] is not None
+
+            # Retrying returns the same execution timestamp.
+            retry = client.post(
+                execute_url, headers=executor_headers
+            )
+
+            assert retry.status_code == 200
+            assert retry.json() == executed.json()
+
+            # Pending requests cannot execute.
+            pending = client.post(
+                followup_url,
+                json={"request_key": str(uuid4())},
+                headers=bot_headers,
+            )
+
+            assert pending.status_code == 201
+
+            pending_url = (
+                followup_url + "/" + pending.json()["id"]
+            )
+
+            assert client.post(
+                pending_url + "/execute",
+                headers=executor_headers,
+            ).status_code == 409
+
+            # Rejected requests cannot execute.
+            rejected = client.post(
+                pending_url + "/decision",
+                json={"decision": "rejected"},
+                headers=headers("owner-user"),
+            )
+
+            assert rejected.status_code == 200
+
+            assert client.post(
+                pending_url + "/execute",
+                headers=executor_headers,
+            ).status_code == 409
+
+            # Expired approved requests cannot execute.
+            from uuid import UUID
+            from allsales.models import FollowupRequest
+
+            expired = client.post(
+                followup_url,
+                json={"request_key": str(uuid4())},
+                headers=bot_headers,
+            )
+
+            assert expired.status_code == 201
+
+            expired_id = expired.json()["id"]
+            expired_url = followup_url + "/" + expired_id
+
+            assert client.post(
+                expired_url + "/decision",
+                json={"decision": "approved"},
+                headers=headers("owner-user"),
+            ).status_code == 200
+
+            with factory.begin() as db:
+                record = db.get(FollowupRequest, UUID(expired_id))
+                record.expires_at = (
+                    datetime.now(timezone.utc) - timedelta(hours=1)
+                )
+
+            assert client.post(
+                expired_url + "/execute",
+                headers=executor_headers,
+            ).status_code == 409
+
+
     finally:
         engine.dispose()
