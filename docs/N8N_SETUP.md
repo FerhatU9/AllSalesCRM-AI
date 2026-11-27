@@ -1,6 +1,6 @@
 # Local n8n setup
 
-**Status:** Local n8n editor and read-only FastAPI health connectivity demonstrated; authenticated workflow integration is not yet implemented. Use fictional data only.
+**Status:** Local health connectivity and authenticated follow-up workflow have been demonstrated on the draft feature branch at 1409a49. Use fictional data only.
 
 ## Isolated development instance
 
@@ -21,15 +21,14 @@ Open http://localhost:5679 and configure the separate local n8n owner account. U
 
 The developer created a dedicated local n8n owner account and manually executed a Manual Trigger, Edit Fields (JSON) and HTTP Request sequence. The request to `http://host.docker.internal:8001/health` returned `status: ok` and `version: 0.8.0` without changing the loopback binding. This checks process connectivity only; it does not authorize access to CRM data or perform an action. The sample approval fields are not trusted authorization evidence.
 
-## First workflow
+## Authenticated demonstration
 
-Build a manual trigger with fictional lead data. Then design the FastAPI approval record, authorization checks, idempotency key and audit trail before connecting the workflow to live endpoints. No schedules, email delivery, external CRM writes or shared credentials. Docker-to-host connectivity requires a separate verified network design; do not weaken the API's loopback restriction merely to make a container connection work.
+Follow the [follow-up automation guide](FOLLOWUP_AUTOMATION.md) to grant the minimum Auth0 client scope, provision the restricted local machine membership, and reconstruct the nine-node manual workflow. This requires draft PR #32's code, including migrations 004 and 005. The workflow creates a pending request, a human owner approves it in the CRM, and n8n retrieves the stored decision; the final filter retained one matching approved item. The machine's attempt to approve returned HTTP 403.
 
 ## Acceptance checks
 
-- Editor opens on the local port; other project containers remain untouched.
-- Manual execution with synthetic data only.
-- Backend rejects unauthorized, unapproved, expired or duplicate requests.
-- An approved local test action produces one auditable result; retries do not duplicate it.
+- Demonstrated: isolated local editor, API health, OAuth2 machine token, assigned organization/lead reads, pending request, same-key retry, human decision and result verification.
+- Remaining: separately authorized internal execution simulation, expired/rejected/duplicate execution tests, full PostgreSQL concurrency coverage, reviewed portable workflow export and clean-instance reproduction.
+- No schedule, real email, outbound integration or external execution. Do not weaken the API's loopback restriction to make a container connection work.
 
 Export only reviewed, sanitized workflow definitions after manual testing; never commit credentials, execution logs or private identifiers.
