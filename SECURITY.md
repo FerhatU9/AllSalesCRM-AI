@@ -1,24 +1,26 @@
 # Security policy
 
-This repository is an educational local prototype of an AI sales-policy assistant, not a production service.
+AllSales CRM is a local synthetic-data development prototype, not a production service.
 
 ## Supported usage
 
-- **Synthetic lead data and synthetic policy documents only.**
-- The development API token is a shared local secret, not a user login or tenant security boundary.
-- The new experimental account endpoint verifies OIDC tokens, but the legacy sales endpoints have not been migrated. This is **not** an end-to-end authenticated customer product.
-- Do not expose FastAPI or Streamlit to the public internet, run a public cloud deployment, or store real customer information.
-- `ALLSALES_ENV` modes other than `local` are deliberately rejected until a secure production architecture exists.
-- Docker Compose publishes its services only to the local host. Never remove the loopback bind in a shared deployment.
+- **Fictional leads and synthetic policy documents only.** Do not store real customer information or expose services to the internet.
+- The Streamlit demo uses a shared local development token, not a user login or tenant security boundary.
+- Authenticated account/lead APIs verify signed OIDC access tokens and enforce organization membership; development Auth0 browser login and local PostgreSQL were demonstrated. The separate demo endpoints are not migrated to user OIDC.
+- `ALLSALES_ENV` modes other than `local` are deliberately rejected. Preserve loopback bindings, including Docker Compose ports.
+- The [draft follow-up feature](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32) adds a separate Auth0 machine application with minimum `request:followups` scope and an `automation` membership. Machines cannot modify leads or approve/reject follow-ups. A live local machine approval attempt returned HTTP 403; only verified owners/admins decide requests.
+- A recorded approved request does not authorize unimplemented external execution. Keep n8n manual, synthetic and unpublished. Do not grant anonymous access or elevate machine identities merely to bypass a failed authorization test.
 
 ## Credentials
 
-Keep Dify app keys and the local development token in `.env` outside version control. Provider API keys belong inside the Dify provider configuration, not this repository. If credentials were exposed, revoke and rotate them immediately. Check commit history as well as current files.
+Keep Dify app keys, database credentials, OIDC configuration and local development tokens in ignored `.env` or `web/.env.local` files, and automation secrets in the dedicated local n8n credential manager. Keep provider keys in Dify itself. Do not commit bearer tokens, credentials, workflow execution logs, real identifiers or private configuration. Review sanitized workflow exports before committing. If a credential is exposed, revoke and rotate it immediately; inspect commit history as well as current files.
 
 ## Vulnerability reporting
 
 For non-sensitive issues, use the repository issue tracker. **Do not publish vulnerabilities, credentials, customer data, or exploit details in public issues.** Contact the repository owner privately through an appropriate secure channel for sensitive disclosures.
 
-## Before any live deployment
+## Before deployment
 
-Require user authentication, authorization, organization-level isolation, signed token checks, rate limiting, monitoring, privacy documentation, threat modeling, backup recovery, secret rotation, and security evaluation. See [commercial architecture](docs/COMMERCIAL_ARCHITECTURE.md).
+Require independently validated authentication and authorization, database-level tenant isolation, audit integrity, rate limits, monitoring, threat modeling, backup recovery, privacy/retention controls, secrets rotation, vulnerability remediation and security assessment. Passing CI and local demonstrations do not establish production readiness.
+
+Read the [architecture](docs/COMMERCIAL_ARCHITECTURE.md), [project limitations](docs/PROJECT_STATUS.md), [automation guide](docs/FOLLOWUP_AUTOMATION.md) and [technical engineering report](docs/AllSales_CRM_Technical_Report.pdf).

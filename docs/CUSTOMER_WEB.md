@@ -94,6 +94,10 @@ A 404 on the account-list page may indicate the wrong backend port; a 503 may in
 - Frontend and backend are loopback-only in this milestone. The backend URL explicitly rejects remote hosts.
 - Use fictional data only; retain local-only restrictions until production security and operational tests pass.
 
+## Follow-up review (draft feature)
+
+The [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval) adds a dedicated per-lead follow-up page. Owners/admins can decide a pending, unexpired request where backend checks allow it; viewers can read the history without request or decision controls. A local owner approved and rejected synthetic requests, and the restricted n8n machine identity was denied when attempting to approve. See the [automation guide](FOLLOWUP_AUTOMATION.md). No execution or external delivery is implemented; the feature remains a draft PR.
+
 ## Next work
 
 Implement controlled account provisioning and invitations, repeatable authenticated browser tests, live-token negative write checks, a policy assistant with organization-scoped retrieval, production-quality audit integrity, rate limiting, UI error/empty-state testing, and managed deployment only after security review. Disposable PostgreSQL integration tests and basic lead activity storage already exist.

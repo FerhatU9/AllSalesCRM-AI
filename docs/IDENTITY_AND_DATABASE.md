@@ -1,6 +1,6 @@
 # Identity and organization database
 
-This is a foundation for a future authenticated product, **not a complete login system or production-ready CRM**. Existing Streamlit and lead-decision endpoints still use a shared local development token; public deployment remains blocked.
+This is a locally demonstrated authenticated CRM foundation, **not a complete account-management system or production-ready CRM**. Existing Streamlit and lead-decision endpoints still use a shared local development token; public deployment remains blocked.
 
 ## Implemented
 
@@ -47,13 +47,17 @@ The endpoint returns only organizations with memberships matching the cryptograp
 
 ## Important limits
 
-- A Next.js frontend with an Auth0 SDK login flow exists, but a complete real login has not yet been verified. Self-signup, invitations and role administration are not built.
+- A development Auth0 tenant was used successfully for local Next.js sign-in/logout and organization-scoped lead management. Self-signup, invitations and role administration are not built.
 - Existing chat and lead-evaluation routes have not been migrated to OIDC authentication.
-- Synthetic lead persistence, organization-scoped CRUD and activity history exist. Live Auth0 integration and database row-level security remain incomplete.
+- Synthetic lead persistence, organization-scoped CRUD and activity history exist. Local Auth0 integration has been demonstrated; database row-level security remains incomplete.
 - Application checks need database-level defense, auditing and real identity-provider integration tests.
-- JWT validation has offline tests, and PostgreSQL has disposable CI tests. Live OIDC integration and a production database are not validated.
+- JWT validation has offline tests, and PostgreSQL has disposable CI tests. Live development OIDC and local PostgreSQL have been demonstrated; production database and independent security validation remain outstanding.
 - **Do not use real customer data or expose the app to the internet.**
+
+## Machine identity (draft feature)
+
+Migration 005 adds the `automation` membership role. On the [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), a signed Auth0 machine token requires `request:followups` and a restricted organization membership. The synthetic provisioning script and n8n guide are documented in [follow-up automation](FOLLOWUP_AUTOMATION.md). Machine actors can read scoped leads and request follow-ups, but cannot write leads or decide requests.
 
 ## Next milestone
 
-Verify hosted login against a real Auth0 development tenant; add controlled invitations and membership administration, database-level row isolation, and authenticated organization-specific knowledge retrieval. The shared dev-token demo must remain local-only.
+Extend the demonstrated local Auth0 login with controlled invitations and membership administration, database-level row isolation, and authenticated organization-specific knowledge retrieval. The shared dev-token demo must remain local-only.

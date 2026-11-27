@@ -26,11 +26,15 @@ flowchart LR
 **Important distinctions:**
 
 - The Streamlit demo uses a shared local development token. It is not a production login mechanism.
-- The Next.js code includes Auth0 integration and passes frontend builds, but a real Auth0 browser login and synthetic lead journey have been demonstrated locally.
+- The Next.js code includes Auth0 integration and passes frontend builds; a real development Auth0 browser login and synthetic lead journey have been demonstrated locally.
 - The FastAPI lead and account endpoints verify bearer tokens and check organization memberships. Local PostgreSQL lead persistence was demonstrated across sessions; a separate disposable PostgreSQL CI workflow covers migration and isolation checks. Neither is a production service.
 - The authenticated Next.js workspace does **not** yet include the Dify policy assistant. The synthetic Dify knowledge is not organization-aware.
 - Lead activity events exist, but no immutable/tamper-resistant operational audit service has been demonstrated.
 - Docker Compose currently runs the local FastAPI/Streamlit demo, **not** a fully configured Next.js/Auth0/PostgreSQL product.
+
+## Draft follow-up automation extension
+
+On the [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), n8n authenticates with its own Auth0 machine application. FastAPI checks signed token scope and the restricted organization membership. It reads permitted leads and creates pending requests. Owners/admins decide in the CRM; n8n reads the stored outcome. The automation identity cannot approve or update leads. The request lifecycle is persisted with migrations 004–005; no execution endpoint is present. The feature is locally demonstrated and subject to draft PR review. See the [workflow guide](FOLLOWUP_AUTOMATION.md) and [technical report](AllSales_CRM_Technical_Report.pdf).
 
 ## Architecture decisions
 
@@ -42,7 +46,7 @@ flowchart LR
 | Data | SQLAlchemy, Alembic, organization-scoped leads and activity records | Proper tenant isolation, migrations, recovery, retention and authorization |
 | AI | Dify Chatflows for Gemini/Claude | Approved company-scoped retrieval, source-span citations, evaluation and abstention |
 | Decision logic | Deterministic lead qualification | Versioned, approved rules independent from LLM-generated text |
-| Workflow automation | No integrated live CRM workflow | Local n8n follow-up test next; backend authorization, explicit approval, retries and idempotency |
+| Workflow automation | Draft PR #32: restricted Auth0 machine identity, tenant-scoped follow-up requests, human decisions and manual n8n result verification | Separately authorized idempotent simulation, tested rejection/expiry/concurrency, sanitized export; no external action |
 | Reliability | GitHub CI, disposable PostgreSQL integration, local Docker configuration | Browser tests, staging, observability, alerting, restore drills and security review |
 | Deployment | Local-only startup restriction | Evaluate Azure Container Apps, managed PostgreSQL, Key Vault and Azure Monitor for controlled staging after local gates |
 
@@ -58,7 +62,7 @@ The developer implements and runs meaningful product steps in VS Code with clear
 
 The agreed sequence is: **verify the authenticated CRM foundation → add n8n follow-up automation with explicit approval → complete the sales workspace → introduce organization-scoped LangGraph AI workflows → stage the application on Azure → run a controlled pilot**. See [roadmap](PRODUCTION_PLAN.md) for concrete tests and release gates. This sequence does not mean these additional technologies are already implemented.
 
-n8n is the first **new** integration after the real Auth0/PostgreSQL journey; no scheduled or external outbound activity is enabled by default. LangGraph orchestrates justified multi-step AI logic; FastAPI retains the authorization boundary, and all external actions require recorded approval. Azure Container Apps and managed PostgreSQL are staging candidates only after local testing and cost approval. Kubernetes and complex distributed infrastructure remain deferred.
+n8n is the first locally demonstrated integration after the real Auth0/PostgreSQL journey (draft feature); no scheduled or external outbound activity is enabled by default. LangGraph orchestrates justified multi-step AI logic; FastAPI retains the authorization boundary, and all external actions require recorded approval. Azure Container Apps and managed PostgreSQL are staging candidates only after local testing and cost approval. Kubernetes and complex distributed infrastructure remain deferred.
 
 ## Related documentation
 

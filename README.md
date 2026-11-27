@@ -1,97 +1,89 @@
 # AllSales CRM
 
-**Sales-policy assistance, deterministic lead qualification, and organization-scoped lead management.**
+**AI-assisted sales policy intelligence · Deterministic lead qualification · Organization-scoped CRM · Human-approved automation**
 
-AllSales CRM explores how a sales team could retrieve answers from approved policy documents, assess leads consistently, and manage organization-scoped lead records. It combines AI-assisted policy answers with deterministic Python decision rules so the language model does not determine sales scores or authorize actions.
+AllSales CRM is a local-development software project exploring how B2B sales teams can retrieve policy information, qualify leads consistently, manage a shared pipeline, and request follow-up actions without giving an AI model or automation service unrestricted authority.
 
-> **Project status: local development prototype.** This repository uses a fictional company, a synthetic policy handbook and sample leads. The code is publicly available, but the application is **not** a deployed service, a complete CRM, or approved for real customer data.
+> **Development status — November 27, 2026:** Synthetic-data prototype, not a deployed SaaS or a production CRM. The authenticated CRM foundation is on `main`; the locally demonstrated, machine-to-machine follow-up approval workflow is under review in [draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32). No external outreach or execution endpoint is enabled.
 
-## Public website
+## Start here
 
-The [AllSales CRM public website](site/) is a static product showcase built from this repository's documented capabilities and actual synthetic-data screenshots. It does **not** host the FastAPI backend, customer login, AI providers, or a live CRM service.
+| Resource | Description |
+| --- | --- |
+| [**Technical engineering report (PDF)**](docs/AllSales_CRM_Technical_Report.pdf) | Nine-page architecture, security, API, evaluation, n8n integration and release-readiness report |
+| [Follow-up automation guide](docs/FOLLOWUP_AUTOMATION.md) | Reproduce the locally demonstrated Auth0 → n8n → CRM workflow on the feature branch |
+| [Project status and limitations](docs/PROJECT_STATUS.md) | Demonstrated behavior, automated checks and open gates |
+| [Product roadmap](docs/PRODUCTION_PLAN.md) | Hands-on implementation milestones toward a controlled pilot |
+| [Public website source](site/) | Static product showcase; it does not run the CRM backend or provide live customer access |
 
-GitHub Pages publishing is configured in `.github/workflows/site.yml`. The repository owner must select **Settings → Pages → Build and deployment → GitHub Actions**, confirm the deployment succeeds, and verify the published address before sharing it. See [website setup and verification](site/README.md).
+## Capabilities
 
-## At a glance
-
-| Capability | Implemented | Boundary |
+| Capability | Development evidence | Boundary |
 | --- | --- | --- |
-| Sales-policy Q&A | Gemini and Claude through separate Dify Chatflows | Requires externally configured Dify knowledge and API keys |
-| Lead qualification | Deterministic scoring, priority, team routing, follow-up and escalation | Local Streamlit demo; recommendations only |
-| AI explanations | Optional model-generated explanation of derived lead decisions | Advisory; does not override Python scoring |
-| Account identity | OIDC token verification and organization memberships | Local development Auth0 sign-in/logout demonstrated |
-| Lead record API | Organization-scoped create, list, read and update; role checks and activity history | Local browser lead creation, updates and owner/viewer presentation demonstrated |
-| Quality checks | Python and PostgreSQL tests, Playwright unauthenticated browser checks, CodeQL analysis, model evaluation and synthetic UI records | 118 local tests passed; dedicated PostgreSQL CI test skipped locally; no production security validation |
+| Sales-policy Q&A | Gemini and Claude through separate Dify Chatflows | Synthetic policy knowledge; external Dify configuration required |
+| Lead qualification | Deterministic Python scoring, priority, team routing and recommendations | Model explanations cannot override scores or approve actions |
+| Authenticated workspace | Next.js, live development Auth0 login/logout, synthetic leads | Not self-service customer onboarding |
+| Lead API and storage | FastAPI membership checks, PostgreSQL, SQLAlchemy, Alembic and lead activity history | Application-level tenant isolation; additional database and security controls required |
+| Human-approved follow-ups | Draft feature: pending requests, idempotent creation, owner/admin decisions | Approval is not execution |
+| n8n integration | Draft feature: restricted Auth0 machine token, lead filtering, request creation, status verification | Local manual workflow, synthetic data only |
+| Quality engineering | Python, TypeScript, Chromium smoke tests, PostgreSQL integration, CodeQL | Not an independent security assessment |
 
-## How it works
+## Architecture
 
-AllSales CRM currently has **two development paths**. The newer web frontend and the original demo remain separate:
+There are two deliberately separate local development paths.
 
 ```mermaid
-flowchart TD
-    A[Local Streamlit interface] --> B[FastAPI demo endpoints]
-    B --> C[Sales-policy chat]
-    B --> D[Lead qualification]
-    C --> E[Gemini or Claude via Dify]
-    K[Synthetic handbook in Dify knowledge base] --> E
-    D --> F[Deterministic Python rules]
-    E --> G[Policy answer and document labels]
-    F --> H[Score, routing and recommendations]
-
-    W[Next.js web workspace with Auth0 integration] --> I[Server-side calls with OIDC access tokens]
-    I --> J[Authenticated FastAPI endpoints]
-    J --> L[Organization membership and role checks]
-    L --> M[Organization-scoped lead records]
-    M --> N[(PostgreSQL via SQLAlchemy)]
-    J --> Q[Lead activity history]
-    Q --> N
+flowchart LR
+    subgraph Demo["Policy and scoring demonstration"]
+        ST[Streamlit] --> DEV[FastAPI demo API]
+        DEV --> RULES[Deterministic Python rules]
+        DEV --> DIFY[Dify Chatflows]
+        DIFY --> MODELS[Gemini / Claude]
+    end
+    subgraph CRM["Authenticated CRM and draft automation"]
+        WEB[Next.js workspace] --> API[FastAPI account and lead API]
+        API --> AUTH[OIDC validation and membership checks]
+        AUTH --> DB[(PostgreSQL)]
+        N8N[n8n manual workflow] -.-> M2M[Auth0 machine token]
+        M2M -.-> API
+        API -.-> FU[Follow-up approval API]
+        FU -.-> DB
+    end
 ```
 
-The Streamlit demo uses a **shared local development token**. The separate Next.js workspace has Auth0 session code; its FastAPI account and lead routes verify OIDC tokens and organization memberships. The browser login and synthetic lead journey have been demonstrated locally with a live development identity provider. The authenticated workspace does not yet include the Dify policy assistant. Dify supplies document labels, not verified passage-level citations.
+Solid connections represent the CRM foundation; dotted connections represent the draft follow-up integration. The legacy Streamlit demo uses a shared local development token. The authenticated workspace uses provider-issued access tokens; all authorization decisions are made in FastAPI, not the browser or n8n. The authenticated workspace does not yet expose the Dify policy assistant or organization-specific retrieval.
 
-### Lead qualification example
+See [architecture and commercial requirements](docs/COMMERCIAL_ARCHITECTURE.md) and the [security policy](SECURITY.md).
 
-A fictional EU SaaS company with 120 employees, a purchase decision expected within 20 days, final budget authority and no recorded engagement receives:
+## Sales intelligence
 
-- **Score:** 85/100 — Priority A
-- **Routing:** SMB Sales Team
-- **Recommended first contact:** Within one business day
+A fictional EU SaaS company with 120 employees, a purchase decision expected within 20 days, final budget authority and no recorded engagement receives **85/100 — Priority A**, routing to the SMB Sales Team and recommended first contact within one business day. Missing mandatory fields prevent a final tier; discount and security exceptions require human review.
 
-Missing mandatory fields prevent a final priority tier. Discount approvals and security incidents generate human-review or escalation recommendations; the application does not grant approval or contact customers.
+![Local lead qualification demonstration](docs/screenshots/discount_approval.png)
 
-### Local interface preview
+*Actual synthetic-data Streamlit demonstration. This interface does not perform CRM writes or send messages.*
 
-![AllSales CRM lead qualification demo showing a manager approval scenario](docs/screenshots/discount_approval.png)
+Read the [lead qualification specification](docs/LEAD_QUALIFICATION.md) and [local scenario evidence](docs/LOCAL_VALIDATION.md).
 
-*Screenshot from a synthetic local demonstration. The interface does not perform real CRM updates.*
+## Human-in-the-loop CRM automation (draft PR)
 
-See [lead qualification details](docs/LEAD_QUALIFICATION.md) and [local scenario evidence](docs/LOCAL_VALIDATION.md).
+The verified local workflow uses a dedicated machine identity with the `request:followups` permission and an `automation` membership in the fictional demo organization. The service retrieves permitted leads, requests a follow-up for the qualified demo lead, and reads the stored decision after a human owner approves it in the CRM.
 
-## Lead activity history
+```text
+Manual Trigger → Edit Fields → API health → List organizations
+ → List Demo Leads → Filter Qualified Leads → Request Sales Follow-up
+ → Check Follow-up Status → Verify Approved Request
+```
 
-Authenticated lead creation and meaningful updates now generate organization-scoped activity records containing verified actor identity, changed field names and relevant status transitions. Organization owners and admins can view these events through a read-only API. The activity record and lead change share one transaction, helping prevent a successful change without its accompanying audit entry.
+The final manual execution retained one approved request. A separate attempt to approve using the machine identity returned HTTP 403. No email, real notification, customer outreach or execution was performed. See the [workflow reconstruction and verification guide](docs/FOLLOWUP_AUTOMATION.md) and [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval).
 
-This is **development-grade activity tracking**, not immutable or production-compliant audit logging. See the [lead activity guide](docs/LEAD_ACTIVITY.md).
+## Run locally
 
-## Development account onboarding and database checks
+**Requirements:** Python 3.11/3.12; Node.js 20.9+ for the web workspace; Docker and a development PostgreSQL database for CRM and n8n. Use fictional data only. The following commands target Windows PowerShell.
 
-A local-only administrator command can now create a **fictional test organization** and assign its first owner from a provider-issued development identity. It refuses remote databases, avoids reassigning existing organizations, and never changes existing membership roles.
+### 1. Streamlit policy and scoring demo
 
-A separate CI workflow runs **real PostgreSQL migrations and cross-organization API checks** against an ephemeral service. These complement the SQLite unit tests but do not prove commercial readiness or replace a live Auth0 browser login test.
-
-Follow [local development onboarding](docs/LOCAL_ONBOARDING.md) to configure and verify these features. Do not use real customer data or bypass local-only safeguards.
-
-## Customer web workspace
-
-A new **Next.js + Auth0 customer workspace** is under development. It provides a landing page, hosted sign-in, an organizations list and organization-scoped synthetic lead screens, with server-side calls to the authenticated FastAPI endpoints. Local developer testing demonstrated sign-in/logout, organization membership, lead creation/update and read-only viewer presentation. Real customer data and public deployment remain prohibited. Read the [customer web setup guide](docs/CUSTOMER_WEB.md).
-
-## Run the local demo
-
-The instructions below target **Windows PowerShell** and a local Python installation. They do not deploy a public service. Set `ALLSALES_ENV=local` explicitly in your untracked `.env`; the application refuses to start if the mode is missing or nonlocal.
-
-**Requirements:** Python 3.11 or 3.12. Policy Q&A also needs a Dify workspace with the model providers configured, the included synthetic handbook indexed, and both sanitized Chatflows imported and re-linked. Follow the [Dify setup guide](docs/DIFY_REPRODUCTION.md).
-
-From the repository root:
+From a fresh clone at the repository root:
 
 ```powershell
 py -m venv .venv
@@ -101,81 +93,66 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-In `.env`, replace the placeholder `API_APP_TOKEN` with the newly generated token. For policy Q&A, add the **Dify application keys** to `DIFY_GEMINI_API_KEY` and `DIFY_CLAUDE_API_KEY`. Keep provider credentials in Dify itself. Never commit `.env`.
-
-Verify the offline test suite:
+Set `ALLSALES_ENV=local` and replace `API_APP_TOKEN` with the generated secret. For policy Q&A, configure `DIFY_GEMINI_API_KEY` and `DIFY_CLAUDE_API_KEY` after following the [Dify reproduction guide](docs/DIFY_REPRODUCTION.md). Do not overwrite an existing environment or commit secrets.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Open two terminals in the repository root:
+Open separate terminals:
 
-| Terminal 1 — FastAPI | Terminal 2 — Streamlit |
+| FastAPI | Streamlit |
 | --- | --- |
 | `.\.venv\Scripts\python.exe -m uvicorn backend.api:app --host 127.0.0.1 --port 8000` | `.\.venv\Scripts\python.exe -m streamlit run app.py` |
 
-Open **http://127.0.0.1:8501**. Choose **Policy assistant** for Dify-backed Q&A, or **Lead qualification** for the local rules-based example.
+Open http://127.0.0.1:8501. See the [local container guide](docs/CONTAINERS.md) for the alternative Compose setup.
 
-A Docker Compose setup is also available for local development: [container guide](docs/CONTAINERS.md). **The Docker workflow has not been independently verified on a clean machine.** Its exposed ports are loopback-only by design.
+### 2. Authenticated CRM
 
-### Database and authenticated lead API
+Follow [local onboarding](docs/LOCAL_ONBOARDING.md), [identity/database configuration](docs/IDENTITY_AND_DATABASE.md) and [customer web setup](docs/CUSTOMER_WEB.md). The observed CRM development ports were web **3000**, FastAPI **8001**, and PostgreSQL **5434**. Configure exact issuer, audience, JWKS URL and local database connection. Run Alembic migrations and provision a fictional organization and verified human owner before logging in.
 
-The organization-scoped lead API is **separate from the Streamlit demo**. It requires:
+For the draft automation feature, use the [follow-up guide](docs/FOLLOWUP_AUTOMATION.md) and isolated [n8n setup](docs/N8N_SETUP.md) (host port 5679). Never reuse a web client secret as an automation credential.
 
-1. A development database configured with `DATABASE_URL` and Alembic migrations applied.
-2. An explicitly configured OIDC issuer, API audience and HTTPS JWKS URL.
-3. Provider-issued RS256 access tokens and provisioned organization memberships.
+## Validation and evaluation
 
-The API offers organization listing plus lead list/create/read/update endpoints, with role checks and organization-scoped queries. It does **not** offer public self-registration or invitation management; the Next.js login interface has been demonstrated with a development Auth0 tenant. See [identity/database setup](docs/IDENTITY_AND_DATABASE.md) and [lead API reference](docs/LEAD_STORAGE.md).
+**Validated feature snapshot:** [1409a49](https://github.com/FerhatU9/AllSalesCRM-AI/commit/1409a499ef7be81ca4c7ed17597b6b1c8ed32598).
 
-## Testing and evidence
+- All five PR workflows passed: Python tests, web workspace checks, browser smoke tests, PostgreSQL integration and CodeQL.
+- Local focused Python regression: 20 passed; separate machine-identity access test: 1 passed. Local PostgreSQL migration 005 applied successfully.
+- Development Auth0 browser journey verified login/logout, membership, lead persistence and owner/viewer presentation. Owner approval/rejection and n8n machine approval denial were tested on the feature branch.
+- The earlier 118-pass local baseline is historical. Check [current Actions runs](https://github.com/FerhatU9/AllSalesCRM-AI/actions) for the latest results. Browser smoke checks are not a full authenticated browser suite; PostgreSQL CI covers migrations and lead isolation, not all follow-up concurrency behavior.
 
-The latest recorded local run reported **118 passed, 1 skipped, 4 warnings, 21 subtests passed**. The skipped test requires an isolated PostgreSQL CI database. See [project status](docs/PROJECT_STATUS.md) for the manual browser results and remaining security checks.
+| Curated evaluation metric | Gemini | Claude |
+| --- | ---: | ---: |
+| Correct essential facts, stored final answers | 17/17 | 17/17 |
+| All expected details | 14/17 | 17/17 |
+| Wrong numbered section references | 1 | 2 |
+| Mean recorded latency | 8.84 s | 4.30 s |
+| Reported tokens (sum) | 9,783 | 16,167 |
 
-| Evidence | What it supports |
+The 34 stored final responses were manually reviewed **after retries** on 17 curated synthetic handbook questions per model. These results do not establish first-attempt reliability, general accuracy or comparative cost. See the [evaluation report](docs/EVALUATION_RESULTS.md), [reviewed responses](data/evaluation_34_reviewed.csv) and [Dify workflow review](docs/DIFY_WORKFLOW_REVIEW.md).
+
+## Repository map
+
+| Path | Responsibility |
 | --- | --- |
-| Python tests and GitHub Actions | Offline checks on Python 3.11 and 3.12; includes rule boundaries, OIDC checks and organization-isolation cases |
-| Dual-model evaluation | 17 curated handbook questions per model; all 34 stored final answers had correct essential policy facts in manual review |
-| Completeness review | Gemini supplied all expected details in 14/17 answers; Claude in 17/17, with noted section-reference errors |
-| Local UI scenarios | Five documented synthetic scenarios, including missing input, discount review, escalation and optional explanation |
-| Sanitized Dify exports | Inspectable workflow definitions; the knowledge index and a new-workspace live reproduction remain unverified |
+| `app.py`, `allsales/` | Streamlit interface, scoring rules, Dify adapters, identity verification and persistence |
+| `backend/` | FastAPI demo and authenticated CRM endpoints |
+| `web/` | Next.js / TypeScript workspace |
+| `migrations/` | Alembic database schema history |
+| `knowledge/`, `dify_exports/` | Synthetic sales handbook and sanitized Chatflows |
+| `data/`, `scripts/`, `tests/` | Evaluation data, development commands and tests |
+| `docs/` | Engineering report, setup, architecture and evidence |
+| `site/` | Static product showcase |
+| `.github/workflows/` | CI and static site publishing configuration |
 
-The evaluation uses a small, curated set and includes successful responses saved **after retries**. It is not evidence of first-attempt model reliability or general accuracy. The current automated test count should be taken from the latest CI run rather than the historical baseline.
+## Roadmap
 
-Read the [evaluation report](docs/EVALUATION_RESULTS.md), [reviewed responses](data/evaluation_34_reviewed.csv) and [Dify workflow review](docs/DIFY_WORKFLOW_REVIEW.md).
+1. Complete the follow-up lifecycle with an authorized, retry-safe **internal simulation**, never real outreach.
+2. Export and review a sanitized portable n8n workflow; reproduce it from a clean local environment.
+3. Improve multi-user CRM usability, authenticated browser coverage and organization administration.
+4. Introduce evidence-based, tenant-authorized retrieval and justified LangGraph orchestration.
+5. Design secured Azure staging, monitoring, backup/restore, cost controls and security review.
+6. Consider a consenting controlled pilot only after release gates are met.
 
-## Repository structure
-
-| Path | Purpose |
-| --- | --- |
-| `app.py` and `allsales/lead_ui.py` | Local Streamlit policy assistant and qualification interface |
-| `backend/api.py` and `backend/lead_routes.py` | Demo endpoints and separate authenticated lead APIs |
-| `allsales/` | Dify client, scoring, identity verification, database models and helpers |
-| `migrations/` | Alembic database schema migrations |
-| `knowledge/` and `dify_exports/` | Synthetic handbook and sanitized Gemini/Claude workflows |
-| `data/`, `scripts/` and `tests/` | Evaluation records, reproducible scripts and automated tests |
-| `docs/` | Architecture, setup, verification evidence and planned work |
-| `Dockerfile` and `compose.yaml` | Local-only container setup |
-
-## Product development sequence
-
-The agreed implementation order is **real Auth0/PostgreSQL login and lead persistence → local n8n approval-based automation → usable multi-user CRM → LangGraph AI workflows with company-scoped knowledge → secured Azure staging → controlled business pilot**. The local CRM demonstration is complete; [isolated n8n setup](docs/N8N_SETUP.md) is the next hands-on task. n8n integration, LangGraph and Azure are **planned**, not implemented customer services. Detailed work packages and completion tests are in the [product roadmap](docs/PRODUCTION_PLAN.md).
-
-## Roadmap to a usable product
-
-The intended first commercial milestone is a **controlled pilot for one consenting business**, followed by broader rollout only after the required security and operational checks. The [working roadmap](docs/PRODUCTION_PLAN.md) is organized around hands-on VS Code implementation and tested user journeys; the [architecture reference](docs/COMMERCIAL_ARCHITECTURE.md) distinguishes existing components from planned technologies.
-
-- **Identity and onboarding:** Token lifecycle, organization invitations and production-ready provisioning.
-- **Secure company workspaces:** Extend authorization to the entire application and knowledge retrieval; add database-level isolation and audit trails.
-- **Operational workflows:** Approved CRM integrations, human authorization before writes, error handling and recovery.
-- **Reliable AI:** Passage-level citations, expanded evaluation, provider cost tracking and failure monitoring.
-- **Deployment and compliance:** Managed infrastructure, HTTPS, secret management, data retention/deletion, backups, load testing and security review.
-
-The existing local-only startup restriction must stay in place until the complete security and deployment gates have been met.
-
-See the [commercial architecture plan](docs/COMMERCIAL_ARCHITECTURE.md), [production development plan](docs/PRODUCTION_PLAN.md), and [security policy](SECURITY.md).
-
----
-
-**Important:** This is a software development project using fictional data. No real CRM integration, customer-data processing, automatic discount approval or public SaaS availability is claimed.
+See the [production plan](docs/PRODUCTION_PLAN.md). The local-only restriction remains in force; no real customer data, automatic outreach, public SaaS availability or production readiness is claimed.
