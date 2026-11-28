@@ -10,11 +10,13 @@ import {
 import {
   BackendError,
   getLead,
+  getLeadRecommendation,
   listFollowups,
   listOrganizations,
   validId,
   type Followup,
   type Lead,
+  type LeadRecommendation,
   type Organization,
 } from "@/lib/backend";
 
@@ -61,6 +63,7 @@ export default async function FollowupPage({
         org: Organization;
         lead: Lead;
         requests: Followup[];
+        recommendation: LeadRecommendation | null;
       }
     | undefined;
 
@@ -69,12 +72,13 @@ export default async function FollowupPage({
     const org = organizations.find((item) => item.id === orgId);
 
     if (org) {
-      const [lead, requests] = await Promise.all([
+      const [lead, requests, recommendation] = await Promise.all([
         getLead(orgId, leadId),
         listFollowups(orgId, leadId),
+        getLeadRecommendation(orgId, leadId).catch(() => null),
       ]);
 
-      data = { org, lead, requests };
+      data = { org, lead, requests, recommendation };
     }
   } catch (err) {
     if (err instanceof BackendError && err.status === 404) {
@@ -94,7 +98,7 @@ export default async function FollowupPage({
 
   if (!data) notFound();
 
-  const { org, lead, requests } = data;
+  const { org, lead, requests, recommendation } = data;
 
   const canRequest =
     org.role !== "viewer" && lead.status === "qualified";
@@ -177,6 +181,10 @@ export default async function FollowupPage({
                     <p>Decided: {formatTime(item.decided_at)}</p>
                   )}
 
+                  {item.executed_at && (
+                    <p>Executed: {formatTime(item.executed_at)}</p>
+                  )}
+
                   {canDecide && pending && (
                     <form
                       className="inline-form"
@@ -214,7 +222,29 @@ export default async function FollowupPage({
           </div>
         </section>
 
-        <aside>
+        <aside className="lead-list">
+          <section className="panel" aria-labelledby="recommendation-heading">
+            <span className="pill">LangGraph · Local rules</span>
+            <h2 id="recommendation-heading">Sales recommendation</h2>
+            {recommendation ? (
+              <>
+                <h3>{recommendation.title}</h3>
+                <p>{recommendation.reason}</p>
+                <ul>
+                  {recommendation.review_steps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p role="status">Recommendation unavailable. You can still review follow-ups.</p>
+            )}
+            <p className="product-caveat">
+              Guidance only. No AI model or external delivery is used in this stage.
+              Human approval is required for any follow-up action.
+            </p>
+          </section>
+
           <section className="panel">
             <h2>Request follow-up</h2>
             <p>Lead status: {lead.status}</p>

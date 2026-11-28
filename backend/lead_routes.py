@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from allsales.auth import VerifiedIdentity, get_verified_identity
 from allsales.models import Identity, LeadAuditEvent, LeadRecord, find_membership
 from allsales.storage import session_factory
+from allsales.recommendation_graph import Recommendation, recommend_lead
 
 
 router = APIRouter(prefix="/v1/organizations/{organization_id}/leads", tags=["Leads"])
@@ -154,6 +155,23 @@ def get_lead(
     session=Depends(safe_session),
 ):
     return scoped_record(session, identity, organization_id, lead_id)
+
+
+@router.get("/{lead_id}/recommendation", response_model=Recommendation)
+def lead_recommendation(
+    organization_id: UUID,
+    lead_id: UUID,
+    response: Response,
+    identity: VerifiedIdentity = Depends(get_verified_identity),
+    session=Depends(safe_session),
+):
+    """Read authorized lead facts; return guidance without changing state."""
+    record = scoped_record(session, identity, organization_id, lead_id)
+    if identity.is_machine:
+        raise HTTPException(status_code=403, detail="Human identity required")
+    response.headers["Cache-Control"] = "no-store"
+    # Only these two derived facts enter the graph; no lead text is sent.
+    return recommend_lead(record.status, bool(record.summary.strip()))
 
 
 @router.patch("/{lead_id}", response_model=LeadView)

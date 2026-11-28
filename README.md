@@ -13,6 +13,7 @@ AllSales CRM is a local-development software project exploring how B2B sales tea
 | [**Technical engineering report (PDF)**](docs/AllSales_CRM_Technical_Report.pdf) | Nine-page architecture and release-readiness report (approval-stage snapshot at 1409a49) |
 | [Follow-up automation guide](docs/FOLLOWUP_AUTOMATION.md) | Reproduce the locally demonstrated Auth0 → n8n → CRM workflow on the feature branch |
 | [Importable n8n workflow](n8n-workflows/sales_followup_automation.json) | Credential-free manual demo template; locally reproduced through approved execution |
+| [LangGraph lead recommendations](docs/LEAD_RECOMMENDATIONS.md) | Read-only, status-driven review guidance (local rules; no LLM call yet) |
 | [Project status and limitations](docs/PROJECT_STATUS.md) | Demonstrated behavior, automated checks and open gates |
 | [Product roadmap](docs/PRODUCTION_PLAN.md) | Hands-on implementation milestones toward a controlled pilot |
 | [Public website source](site/) | Static product showcase; it does not run the CRM backend or provide live customer access |
@@ -27,6 +28,7 @@ AllSales CRM is a local-development software project exploring how B2B sales tea
 | Lead API and storage | FastAPI membership checks, PostgreSQL, SQLAlchemy, Alembic and lead activity history | Application-level tenant isolation; additional database and security controls required |
 | Human-approved follow-ups | Draft feature: pending requests, idempotent creation, owner/admin decisions, authorized execution simulation | Approval alone cannot execute |
 | n8n integration | Draft feature: restricted Auth0 machine token, lead filtering, request creation, status verification, internal execution | Local manual workflow, synthetic data only |
+| LangGraph recommendations | Draft feature: authorized read-only graph, conditional routing and review checklist in the CRM | No inferred scoring, model calls or mutations |
 | Quality engineering | Python, TypeScript, Chromium smoke tests, PostgreSQL integration, CodeQL | Not an independent security assessment |
 
 ## Architecture
@@ -77,6 +79,10 @@ Manual Trigger → Demo Configuration → Check API Health → List Assigned Org
 ```
 
 The local n8n workflow retained one matching approved request and successfully transitioned its status to `executed`. A separate attempt to approve using the machine identity returned HTTP 403. Execution changes the follow-up database record only; no email, notification or customer outreach occurs. The sanitized ten-node template was imported into a separate local workflow, reconnected to the dedicated OAuth2 credential, and reproduced through pending creation, human approval and execution. See the [workflow import and verification guide](docs/FOLLOWUP_AUTOMATION.md) and [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval).
+
+## LangGraph lead recommendations (draft feature)
+
+The first LangGraph workflow reads two derived facts from an authorized lead: its stored status and whether it has a summary. Conditional routing produces review or hold guidance; the follow-up page displays it without creating or executing a request. This is local rule orchestration, not LLM-generated advice. See the [implementation and local validation guide](docs/LEAD_RECOMMENDATIONS.md).
 
 ## Run locally
 
@@ -153,7 +159,7 @@ The 34 stored final responses were manually reviewed **after retries** on 17 cur
 1. Review the locally reproduced n8n import and the draft PR; capture direct live replay/timestamp evidence.
 2. Extend execution authorization and PostgreSQL concurrency coverage; preserve the database-only simulation and never enable real outreach.
 3. Improve multi-user CRM usability, authenticated browser coverage and organization administration.
-4. Introduce evidence-based, tenant-authorized retrieval and justified LangGraph orchestration.
+4. Extend the initial read-only LangGraph workflow with structured qualification inputs, evidence-based retrieval and constrained AI explanations.
 5. Design secured Azure staging, monitoring, backup/restore, cost controls and security review.
 6. Consider a consenting controlled pilot only after release gates are met.
 

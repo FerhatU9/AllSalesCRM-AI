@@ -147,3 +147,22 @@ export async function resolveFollowupRequest(
     }
   );
 }
+
+export type LeadRecommendation = {
+  lead_status: Lead["status"];
+  recommended_action: "review_followup" | "complete_qualification" |
+    "review_missing_context" | "no_action";
+  title: string;
+  reason: string;
+  review_steps: string[];
+  human_review_required: true;
+  automated_actions_taken: 0;
+  mode: "local_rules";
+};
+
+export async function getLeadRecommendation(
+  orgId: string,
+  leadId: string
+): Promise<LeadRecommendation> {
+  return apiRequest<LeadRecommendation>(leadPath(orgId, leadId) + "/recommendation");
+}

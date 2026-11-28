@@ -32,6 +32,10 @@ flowchart LR
 - Lead activity events exist, but no immutable/tamper-resistant operational audit service has been demonstrated.
 - Docker Compose currently runs the local FastAPI/Streamlit demo, **not** a fully configured Next.js/Auth0/PostgreSQL product.
 
+## Draft recommendation extension
+
+A human-only authenticated recommendation route uses LangGraph to route two derived facts (stored status and summary presence) to review or hold guidance. No raw lead text, external model call, graph persistence or CRM mutation is involved. The web panel is advisory; FastAPI and the existing human decision path remain the authorization boundary. See [lead recommendations](LEAD_RECOMMENDATIONS.md).
+
 ## Draft follow-up automation extension
 
 On the [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), n8n authenticates with its own Auth0 machine application. FastAPI checks signed token scope and the restricted organization membership. It reads permitted leads and creates pending requests. Owners/admins decide in the CRM; n8n reads the stored outcome. The automation identity cannot approve or update leads. The request lifecycle is persisted with migrations 004–005; the separately scoped execution endpoint records a retry-safe `executed` state for qualified, approved, unexpired requests owned by the machine requester. There is no external delivery. The feature is locally demonstrated and subject to draft PR review. See the [workflow guide](FOLLOWUP_AUTOMATION.md) and [technical report](AllSales_CRM_Technical_Report.pdf).
