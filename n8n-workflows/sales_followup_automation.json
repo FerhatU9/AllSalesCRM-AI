@@ -1,0 +1,338 @@
+{
+  "name": "Sales Follow-up Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        -672
+      ],
+      "id": "cd57f31f-bfc0-5f1e-896b-33b54617aa66",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"company_name\": \"Nordvale Technologies\",\n  \"request_key\": \"REPLACE_WITH_NEW_UUID\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -224,
+        -672
+      ],
+      "id": "8306e4fe-8733-5663-a2f7-105336109cf7",
+      "name": "Demo Configuration",
+      "notes": "Generate a UUID before the first run. Keep it unchanged until this follow-up lifecycle is complete. Fictional data only.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:8001/health",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        -672
+      ],
+      "id": "170bdeb8-b2e9-5845-8d38-026b9adf8fe3",
+      "name": "Check API Health"
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:8001/v1/account/organizations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        -672
+      ],
+      "id": "018f60b1-6de6-5c06-9865-9e7cbbc6aba2",
+      "name": "List Assigned Organizations",
+      "notes": "Select your locally configured AllSales CRM Automation OAuth2 API credential before running."
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:8001/v1/organizations/{{ $json.organizations.find(o => o.slug === 'allsales-demo' && o.role === 'automation').id }}/leads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        -672
+      ],
+      "id": "703615f0-335e-556a-97fe-17d99c3cf03e",
+      "name": "List Demo Leads",
+      "notes": "Select your locally configured AllSales CRM Automation OAuth2 API credential before running."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "be18f60a-b491-562a-8ade-23e77c0d6f97",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "qualified",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "41a1fa01-7941-5889-998b-e8771e2a305e",
+              "leftValue": "={{ $json.company_name }}",
+              "rightValue": "={{ $('Demo Configuration').first().json.company_name }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        672,
+        -672
+      ],
+      "id": "7678f88d-620e-523e-bef7-9bb7208c2781",
+      "name": "Filter Qualified Leads"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:8001/v1/organizations/{{ $json.organization_id }}/leads/{{ $json.id }}/followups",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "request_key",
+              "value": "={{ $('Demo Configuration').first().json.request_key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        -672
+      ],
+      "id": "99bd1379-68a9-5ebf-8762-2ffd98ade590",
+      "name": "Request Sales Follow-up",
+      "notes": "Select your locally configured AllSales CRM Automation OAuth2 API credential before running."
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:8001/v1/organizations/{{ $('Filter Qualified Leads').first().json.organization_id }}/leads/{{ $json.lead_id }}/followups",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        -672
+      ],
+      "id": "45416c25-42e4-55ea-8d29-f65cd752ae96",
+      "name": "Check Follow-up Status",
+      "notes": "Select your locally configured AllSales CRM Automation OAuth2 API credential before running."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "27dae482-1171-5aea-ada7-2c5e18f77f69",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "={{ $('Request Sales Follow-up').first().json.id }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "5d4c9db7-e15f-5ac6-a777-5e460ea9017e",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        1344,
+        -672
+      ],
+      "id": "88a5b79d-c99b-5f87-b292-69ff598c85a7",
+      "name": "Verify Approved Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:8001/v1/organizations/{{ $('Filter Qualified Leads').first().json.organization_id }}/leads/{{ $json.lead_id }}/followups/{{ $json.id }}/execute",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1568,
+        -672
+      ],
+      "id": "c3c32e42-b684-5c22-9b82-1b852fc20208",
+      "name": "Execute Approved Follow-up",
+      "notes": "Select your locally configured AllSales CRM Automation OAuth2 API credential before running."
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Demo Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Demo Configuration": {
+      "main": [
+        [
+          {
+            "node": "Check API Health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check API Health": {
+      "main": [
+        [
+          {
+            "node": "List Assigned Organizations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Assigned Organizations": {
+      "main": [
+        [
+          {
+            "node": "List Demo Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Demo Leads": {
+      "main": [
+        [
+          {
+            "node": "Filter Qualified Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Qualified Leads": {
+      "main": [
+        [
+          {
+            "node": "Request Sales Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Sales Follow-up": {
+      "main": [
+        [
+          {
+            "node": "Check Follow-up Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Follow-up Status": {
+      "main": [
+        [
+          {
+            "node": "Verify Approved Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Approved Request": {
+      "main": [
+        [
+          {
+            "node": "Execute Approved Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "active": false,
+  "pinData": {}
+}

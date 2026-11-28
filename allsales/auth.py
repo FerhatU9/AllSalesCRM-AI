@@ -22,6 +22,20 @@ bearer = HTTPBearer(auto_error=False)
 class VerifiedIdentity:
     issuer: str
     subject: str
+    scopes: frozenset[str] = frozenset()
+
+    @property
+    def is_machine(self) -> bool:
+        return self.subject.endswith("@clients")
+
+    def allows_role(self, role: str) -> bool:
+        if self.is_machine:
+            return (
+                role == "automation"
+                and "request:followups" in self.scopes
+            )
+
+        return role in {"owner", "admin", "sales", "viewer"}
 
 
 def oidc_settings() -> tuple[str, str, str]:
@@ -71,7 +85,28 @@ def verify_access_token(token: str) -> VerifiedIdentity:
     subject = claims.get("sub")
     if not isinstance(subject, str) or not subject.strip():
         raise HTTPException(status_code=401, detail="Invalid access token")
-    return VerifiedIdentity(issuer=issuer, subject=subject)
+    scope = claims.get("scope", "")
+
+    if not isinstance(scope, str):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid access token scope",
+        )
+
+    if (
+        claims.get("gty") == "client-credentials"
+        and not subject.endswith("@clients")
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid machine identity",
+        )
+
+    return VerifiedIdentity(
+        issuer=issuer,
+        subject=subject,
+        scopes=frozenset(scope.split()),
+    )
 
 
 def get_verified_identity(

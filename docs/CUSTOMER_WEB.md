@@ -29,7 +29,7 @@ Create a Regular Web Application in Auth0 and register:
 - Authorize the Regular Web Application for user-delegated access to the custom API if its application access policy requires a client grant. Machine-to-machine access is not needed for interactive sign-in.
 - API audience: e.g. `https://api.allsales.local` (an identifier, not a public API URL)
 
-Use one browser origin consistently. If using `http://127.0.0.1:3000`, configure its exact `/auth/callback` URL and allowed logout redirect (including the trailing slash if requested by the SDK). The issuer and JWKS URL must use HTTPS and the same actual tenant host, regardless of region.
+Use one browser origin consistently. Check the configured value from the repository root with `Select-String -Path web/.env.local -Pattern '^APP_BASE_URL='` (does not print secrets). During local import validation, navigation from `localhost` to a `127.0.0.1` callback produced an invalid state error despite a successful Auth0 login; restarting the sign-in at the configured `http://127.0.0.1:3000` restored access. Do not bypass state validation. If using `http://127.0.0.1:3000`, configure its exact `/auth/callback` URL and allowed logout redirect (including the trailing slash if requested by the SDK). The issuer and JWKS URL must use HTTPS and the same actual tenant host, regardless of region.
 
 Use the Auth0 domain, client ID and client secret from that application. Do not paste these credentials into GitHub issues or commit them.
 
@@ -96,7 +96,15 @@ A 404 on the account-list page may indicate the wrong backend port; a 503 may in
 
 ## Follow-up review (draft feature)
 
-The [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval) adds a dedicated per-lead follow-up page. Owners/admins can decide a pending, unexpired request where backend checks allow it; viewers can read the history without request or decision controls. A local owner approved and rejected synthetic requests, and the restricted n8n machine identity was denied when attempting to approve. See the [automation guide](FOLLOWUP_AUTOMATION.md). No execution or external delivery is implemented; the feature remains a draft PR.
+The [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval) adds a dedicated per-lead follow-up page. Owners/admins can decide a pending, unexpired request where backend checks allow it; viewers can read the history without request or decision controls. A local owner approved and rejected synthetic requests, and the restricted n8n machine identity was denied when attempting to approve. See the [automation guide](FOLLOWUP_AUTOMATION.md). The machine-only endpoint implements authorized database-only execution; no external delivery is implemented; the feature remains a draft PR.
+
+## Read-only recommendation panel (draft feature)
+
+The follow-up page displays status-driven LangGraph recommendations and execution timestamps. Recommendations are fetched through the server-side authorized API and remain advisory; an unavailable recommendation does not disable the existing follow-up review controls. No AI model or external delivery is enabled by this panel. See [lead recommendations](LEAD_RECOMMENDATIONS.md).
+
+## Structured qualification preview (draft feature)
+
+The **Evaluate lead** link on an active lead's follow-up page opens a fictional-data-only form for owner/admin/sales members. The LangGraph workflow returns a deterministic score, routing and policy actions, with optional explicitly selected Gemini/Claude explanation via Dify. No CRM data is persisted or modified by the preview. The recommendation panel, authenticated deterministic preview and both live model routes have been demonstrated locally, with no provider-reported source documents. Explicit **Save qualification** records the reviewed server-calculated decision without raw inputs or AI text. View history and the organization **Sales intelligence dashboard**; viewers have read-only access. The new persistence journey requires migration 006 and local validation. See [qualification history](QUALIFICATION_HISTORY.md). See [qualification preview](QUALIFICATION_PREVIEW.md).
 
 ## Next work
 

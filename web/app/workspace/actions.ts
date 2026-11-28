@@ -1,6 +1,18 @@
 "use server";
 import { auth0 } from "@/lib/auth0";
-import { changeLeadStatus, createLead, validId, type Lead } from "@/lib/backend";
+import {
+  changeLeadStatus,
+  createLead,
+  validId,
+  createFollowupRequest,
+  resolveFollowupRequest,
+  BackendError,
+  previewLeadQualification,
+  saveQualificationSnapshot,
+  type QualificationSnapshot,
+  type QualificationPreview,
+  type Lead,
+} from "@/lib/backend";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -44,4 +56,165 @@ export async function updateLeadStatus(orgId:string,leadId:string,formData:FormD
   }
   revalidatePath("/workspace/" + orgId);
   redirect(location(orgId,"updated"));
+}
+function followupLocation(
+  orgId: string,
+  leadId: string,
+  notice?: string
+) {
+  const path = `/workspace/${orgId}/leads/${leadId}/followups`;
+
+  return notice ? `${path}?notice=${notice}` : path;
+}
+
+export async function requestFollowupAction(
+  orgId: string,
+  leadId: string,
+  requestKey: string,
+  _formData: FormData
+): Promise<void> {
+  await requireSession();
+
+  if (!validId(orgId) || !validId(leadId) || !validId(requestKey)) {
+    redirect("/workspace");
+  }
+
+  try {
+    await createFollowupRequest(orgId, leadId, requestKey);
+  } catch (err) {
+    redirect(
+      followupLocation(
+        orgId,
+        leadId,
+        err instanceof BackendError && err.status === 409
+          ? "conflict"
+          : "failed"
+      )
+    );
+  }
+
+  revalidatePath(followupLocation(orgId, leadId));
+
+  redirect(followupLocation(orgId, leadId, "created"));
+}
+
+export async function decideFollowupAction(
+  orgId: string,
+  leadId: string,
+  followupId: string,
+  formData: FormData
+): Promise<void> {
+  await requireSession();
+
+  if (!validId(orgId) || !validId(leadId) || !validId(followupId)) {
+    redirect("/workspace");
+  }
+
+  const decision = formData.get("decision");
+
+  if (decision !== "approved" && decision !== "rejected") {
+    redirect(followupLocation(orgId, leadId, "invalid"));
+  }
+
+  try {
+    await resolveFollowupRequest(
+      orgId,
+      leadId,
+      followupId,
+      decision
+    );
+  } catch (err) {
+    redirect(
+      followupLocation(
+        orgId,
+        leadId,
+        err instanceof BackendError && err.status === 409
+          ? "conflict"
+          : "failed"
+      )
+    );
+  }
+
+  revalidatePath(followupLocation(orgId, leadId));
+
+  redirect(followupLocation(orgId, leadId, decision));
+}
+
+export async function qualificationPreviewAction(
+  orgId: string, leadId: string, formData: FormData
+): Promise<{result: QualificationPreview | null; error: string | null}> {
+  await requireSession();
+  if (!validId(orgId) || !validId(leadId)) {
+    return {result: null, error: "Invalid record."};
+  }
+  const provider = formData.get("provider");
+  if (formData.get("confirm_synthetic") !== "on" ||
+      (provider !== "none" && provider !== "gemini" && provider !== "claude")) {
+    return {result: null, error: "Confirm synthetic data and select an explanation mode."};
+  }
+  const facts = parseQualificationFacts(formData);
+  if (!facts) return {result: null, error: "Enter valid numeric values."};
+  try {
+    return {result: await previewLeadQualification(orgId, leadId, facts, provider), error: null};
+  } catch (err) {
+    const error = err instanceof BackendError && err.status === 422
+      ? "Some values are invalid. Check the form and try again."
+      : err instanceof BackendError && err.status === 409
+      ? "This lead is archived and cannot be evaluated."
+      : err instanceof BackendError && err.status === 403
+      ? "You do not have access to evaluate this lead."
+      : err instanceof BackendError && err.status === 404
+      ? "The lead or preview endpoint was not found. Check access and restart the updated local API."
+      : "Preview unavailable. Check your session and local API.";
+    return {result: null, error};
+  }
+}
+
+function parseQualificationFacts(formData: FormData): Record<string, string | number | boolean | null> | null {
+  const string = (key: string) => {
+    const value = formData.get(key);
+    return typeof value === "string" ? value.trim() : "";
+  };
+  const facts: Record<string, string | number | boolean | null> = {};
+  for (const field of [
+    "country", "industry", "contact_name", "business_email", "lead_source",
+    "assigned_owner", "consent_status", "decision_authority", "engagement"
+  ]) facts[field] = string(field);
+  for (const field of ["employee_count", "decision_days", "proposed_discount_pct"]) {
+    const raw = string(field);
+    const value = raw === "" ? null : Number(raw);
+    if (value !== null && !Number.isFinite(value)) {
+      return null;
+    }
+    facts[field] = value;
+  }
+  for (const field of ["custom_contract_terms", "suspected_security_incident", "urgent_service_outage"]) {
+    facts[field] = formData.get(field) === "on";
+  }
+  return facts;
+}
+
+export async function saveQualificationAction(
+  orgId: string, leadId: string, formData: FormData, requestKey: string, reviewDigest: string
+): Promise<{result: QualificationSnapshot | null; error: string | null}> {
+  await requireSession();
+  if (!validId(orgId) || !validId(leadId) || !validId(requestKey) ||
+      !/^[a-f0-9]{64}$/.test(reviewDigest) || formData.get("confirm_synthetic") !== "on") {
+    return {result: null, error: "Preview confirmed synthetic facts before saving."};
+  }
+  const facts = parseQualificationFacts(formData);
+  if (!facts) return {result: null, error: "Enter valid numeric values."};
+  try {
+    const result = await saveQualificationSnapshot(orgId, leadId, facts, requestKey, reviewDigest);
+    revalidatePath(`/workspace/${orgId}/leads/${leadId}/qualification`);
+    revalidatePath(`/workspace/${orgId}/sales-intelligence`);
+    return {result, error: null};
+  } catch (err) {
+    const status = err instanceof BackendError ? err.status : 503;
+    return {result: null, error: status === 409
+      ? "The reviewed decision is no longer current or the request conflicts. Preview again."
+      : status === 403 || status === 404
+      ? "You cannot save a decision for this lead. Check access and API version."
+      : "Could not confirm the save. Retry the same reviewed decision."};
+  }
 }

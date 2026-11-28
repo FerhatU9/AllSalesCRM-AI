@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -15,6 +15,12 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from allsales.auth import VerifiedIdentity, get_verified_identity
 from allsales.models import Identity, LeadAuditEvent, LeadRecord, find_membership
 from allsales.storage import session_factory
+from allsales.recommendation_graph import Recommendation, recommend_lead
+from allsales.lead_qualification import LeadInput
+from allsales.qualification_snapshot import review_digest
+from allsales.qualification_graph import (
+    QualificationPreview, QualificationPreviewRequest, preview_qualification,
+)
 
 
 router = APIRouter(prefix="/v1/organizations/{organization_id}/leads", tags=["Leads"])
@@ -45,13 +51,27 @@ class LeadView(BaseModel):
 
 def scoped_membership(session, identity: VerifiedIdentity, org_id: UUID, *, write=False):
     membership = find_membership(
-        session, issuer=identity.issuer, subject=identity.subject, organization_id=org_id
+        session,
+        issuer=identity.issuer,
+        subject=identity.subject,
+        organization_id=org_id,
     )
-    # For nonmembers, don't expose whether the requested organization or record exists.
+
     if membership is None:
         raise HTTPException(status_code=404, detail="Not found")
+
+    if not identity.allows_role(membership.role):
+        raise HTTPException(
+            status_code=403,
+            detail="Identity is not authorized for this role",
+        )
+
     if write and membership.role not in WRITE_ROLES:
-        raise HTTPException(status_code=403, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient permissions",
+        )
+
     return membership
 
 
@@ -140,6 +160,57 @@ def get_lead(
     session=Depends(safe_session),
 ):
     return scoped_record(session, identity, organization_id, lead_id)
+
+
+@router.get("/{lead_id}/recommendation", response_model=Recommendation)
+def lead_recommendation(
+    organization_id: UUID,
+    lead_id: UUID,
+    response: Response,
+    identity: VerifiedIdentity = Depends(get_verified_identity),
+    session=Depends(safe_session),
+):
+    """Read authorized lead facts; return guidance without changing state."""
+    record = scoped_record(session, identity, organization_id, lead_id)
+    if identity.is_machine:
+        raise HTTPException(status_code=403, detail="Human identity required")
+    response.headers["Cache-Control"] = "no-store"
+    # Only these two derived facts enter the graph; no lead text is sent.
+    return recommend_lead(record.status, bool(record.summary.strip()))
+
+
+class QualificationPreviewView(QualificationPreview):
+    review_digest: str
+
+
+@router.post("/{lead_id}/qualification-preview", response_model=QualificationPreviewView)
+def qualification_preview(
+    organization_id: UUID,
+    lead_id: UUID,
+    payload: QualificationPreviewRequest,
+    response: Response,
+    identity: VerifiedIdentity = Depends(get_verified_identity),
+    session=Depends(safe_session),
+):
+    """Evaluate submitted fictional facts for an authorized non-archived lead."""
+    record = scoped_record(session, identity, organization_id, lead_id, write=True)
+    status = record.status
+    if status not in {"new", "qualified"}:
+        raise HTTPException(status_code=409, detail="Archived leads cannot be evaluated")
+    # Company and use case are server-derived; the payload cannot override them.
+    lead = LeadInput(
+        company_name=record.company_name,
+        stated_use_case=record.summary,
+        **payload.facts.model_dump(),
+    )
+    # Release the read transaction before a potentially slow opt-in provider call.
+    session.rollback()
+    response.headers["Cache-Control"] = "no-store"
+    result = preview_qualification(lead, status, payload.provider)
+    return QualificationPreviewView(
+        **result.model_dump(),
+        review_digest=review_digest(lead_id, status, result.decision.model_dump(mode="json")),
+    )
 
 
 @router.patch("/{lead_id}", response_model=LeadView)

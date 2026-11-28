@@ -1,6 +1,6 @@
 # Local n8n setup
 
-**Status:** Local health connectivity and authenticated follow-up workflow have been demonstrated on the draft feature branch at 1409a49. Use fictional data only.
+**Status:** Local health connectivity and authenticated follow-up workflow have been demonstrated on the draft feature branch at da5af67, including reproduction from the sanitized workflow template and database-only execution. Use fictional data only.
 
 ## Isolated development instance
 
@@ -23,12 +23,12 @@ The developer created a dedicated local n8n owner account and manually executed 
 
 ## Authenticated demonstration
 
-Follow the [follow-up automation guide](FOLLOWUP_AUTOMATION.md) to grant the minimum Auth0 client scope, provision the restricted local machine membership, and reconstruct the nine-node manual workflow. This requires draft PR #32's code, including migrations 004 and 005. The workflow creates a pending request, a human owner approves it in the CRM, and n8n retrieves the stored decision; the final filter retained one matching approved item. The machine's attempt to approve returned HTTP 403.
+Follow the [follow-up automation guide](FOLLOWUP_AUTOMATION.md) to grant the minimum Auth0 client scopes, provision the restricted local machine membership, and import the [sanitized ten-node manual workflow](../n8n-workflows/sales_followup_automation.json). This requires draft PR #32's code, including migrations 004 and 005. The workflow creates a pending request, a human owner approves it in the CRM, and n8n retrieves the stored decision; the final filter retained one matching approved item and the execution node returned `executed`. The machine's attempt to approve returned HTTP 403.
 
 ## Acceptance checks
 
 - Demonstrated: isolated local editor, API health, OAuth2 machine token, assigned organization/lead reads, pending request, same-key retry, human decision and result verification.
-- Remaining: separately authorized internal execution simulation, expired/rejected/duplicate execution tests, full PostgreSQL concurrency coverage, reviewed portable workflow export and clean-instance reproduction.
-- No schedule, real email, outbound integration or external execution. Do not weaken the API's loopback restriction to make a container connection work.
+- Remaining: independent clean-instance reproduction beyond the developer’s separate local workflow import, least-privilege grant review, live replay/timestamp evidence and full PostgreSQL execution concurrency coverage.
+- No schedule, real email, outbound integration or external delivery; execution modifies only the follow-up database record. Do not weaken the API's loopback restriction to make a container connection work.
 
 Export only reviewed, sanitized workflow definitions after manual testing; never commit credentials, execution logs or private identifiers.
