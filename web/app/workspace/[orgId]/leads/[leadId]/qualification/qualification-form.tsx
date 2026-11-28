@@ -72,7 +72,13 @@ function Results({result}: {result: QualificationPreview}) {
         {result.explanation_status === "complete" ? <>
           <p><strong>{result.provider === "gemini" ? "Gemini" : "Claude"} via Dify</strong> — verify against the handbook.</p>
           <p className="qualification-explanation">{result.explanation}</p>
-          {result.source_documents.length > 0 && <p className="muted-note">Provider-reported sources: {result.source_documents.join(", ")}</p>}
+          {result.source_documents.length > 0
+            ? <p className="muted-note">Provider-reported sources: {result.source_documents.join(", ")}</p>
+            : <p className="muted-note">No source documents were reported. Verify the answer against the handbook.</p>}
+        </> : result.explanation_status === "abstained" ? <>
+          <p><strong>{result.provider === "gemini" ? "Gemini" : "Claude"} via Dify</strong> — no supported explanation returned.</p>
+          <p className="qualification-explanation">{result.explanation}</p>
+          <p className="muted-note">The model abstained. Check the Dify run's Knowledge Retrieval results. The deterministic score and policy actions above remain authoritative.</p>
         </> : <p>{
           result.explanation_status === "not_requested" ? "No AI model requested. The deterministic preview is complete."
           : result.explanation_status === "withheld_incomplete" ? "Explanation withheld until the required facts and scoring factors are complete."

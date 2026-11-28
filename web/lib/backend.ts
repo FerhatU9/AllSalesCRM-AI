@@ -189,7 +189,7 @@ export type QualificationPreview = {
     policy_version: string;
   };
   provider: QualificationProvider;
-  explanation_status: "not_requested" | "withheld_incomplete" | "unavailable" | "complete";
+  explanation_status: "not_requested" | "withheld_incomplete" | "unavailable" | "abstained" | "complete";
   explanation_failure: "missing_configuration" | "invalid_configuration" | "access_rejected" |
     "rate_limited" | "provider_busy" | "request_rejected" | "timeout" | "network" |
     "invalid_response" | "empty_answer" | "unknown" | null;

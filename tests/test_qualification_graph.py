@@ -220,3 +220,41 @@ def test_no_key_diagnostic_and_empty_response(monkeypatch):
     assert preview_qualification(sample(), "qualified", "gemini").explanation_failure == "empty_answer"
     monkeypatch.setenv("DIFY_BASE_URL", "http://invalid.example")
     assert preview_qualification(sample(), "qualified", "gemini").explanation_failure == "invalid_configuration"
+
+
+@pytest.mark.parametrize("provider,answer", [
+    ("gemini", "The AllSales CRM handbook does not specify this information."),
+    ("claude", "The handbook does not specify this information."),
+    ("gemini", '  “The AllSales CRM handbook does not specify this information.”  '),
+])
+def test_handbook_abstention_is_not_successful_explanation(monkeypatch, provider, answer):
+    monkeypatch.setenv("DIFY_GEMINI_API_KEY", "gemini-test-key")
+    monkeypatch.setenv("DIFY_CLAUDE_API_KEY", "claude-test-key")
+    calls = []
+    def mock_ask(self, question, *, user_id, conversation_id):
+        calls.append(question)
+        assert "scoring 85 points" in question
+        assert "Section 4 — Priority tiers and follow-up times" in question
+        assert "Section 3 — Lead scoring rules" in question
+        assert "Section 5 — Sales team routing" in question
+        assert "Demo Company Sentinel" not in question
+        assert "demo@example.test" not in question
+        return ChatReply(answer, "", ())
+
+    monkeypatch.setattr(DifyClient, "ask", mock_ask)
+    result = preview_qualification(sample(), "qualified", provider)
+    assert len(calls) == 1
+    assert result.explanation_status == "abstained"
+    assert result.explanation_failure is None
+    assert result.explanation == answer.strip()
+    assert result.decision.provisional_score == 85
+    assert result.decision.priority_tier == "A"
+    assert result.followup_approval_required and result.automated_actions_taken == 0
+
+
+def test_partial_explanation_is_not_discarded(monkeypatch):
+    monkeypatch.setenv("DIFY_GEMINI_API_KEY", "test-key")
+    answer = ("Section 4 assigns Priority A to 85 points. "
+              "The handbook does not specify this information for the other requested topic.")
+    monkeypatch.setattr(DifyClient, "ask", lambda *a, **k: ChatReply(answer, "", ("Handbook",)))
+    assert preview_qualification(sample(), "qualified", "gemini").explanation_status == "complete"

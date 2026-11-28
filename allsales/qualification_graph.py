@@ -16,7 +16,7 @@ from allsales.lead_qualification import LeadDecision, LeadFacts, LeadInput, eval
 
 
 Provider = Literal["none", "gemini", "claude"]
-ExplanationStatus = Literal["not_requested", "withheld_incomplete", "unavailable", "complete"]
+ExplanationStatus = Literal["not_requested", "withheld_incomplete", "unavailable", "abstained", "complete"]
 ExplanationFailure = Literal[
     "missing_configuration", "invalid_configuration", "access_rejected", "rate_limited",
     "provider_busy", "request_rejected", "timeout", "network", "invalid_response",
@@ -102,6 +102,15 @@ def _classify_error(error: DifyError) -> ExplanationFailure:
     return "unknown"
 
 
+def is_handbook_abstention(answer: str) -> bool:
+    """Recognize the published Chatflows' fixed no-evidence answer, not partial answers."""
+    normalized = " ".join(answer.casefold().split()).strip(" \"“”' *_.")
+    return normalized in {
+        "the allsales crm handbook does not specify this information",
+        "the handbook does not specify this information",
+    }
+
+
 def explain_policy(state: PreviewState) -> dict:
     provider = state["provider"]
     if provider == "gemini":
@@ -134,7 +143,7 @@ def explain_policy(state: PreviewState) -> dict:
     if not answer:
         return _failure(provider, "empty_answer")
     return {
-        "explanation_status": "complete",
+        "explanation_status": "abstained" if is_handbook_abstention(answer) else "complete",
         "explanation": answer[:4000],
         "source_documents": [name[:200] for name in reply.source_documents[:10]],
     }
