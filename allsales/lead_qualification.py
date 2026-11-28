@@ -28,14 +28,13 @@ OTHER_COUNTRIES = (
 COUNTRY_OPTIONS = ("Not provided",) + tuple(sorted(EU_COUNTRIES + UK_COUNTRIES + OTHER_COUNTRIES))
 
 
-class LeadInput(BaseModel):
-    company_name: str = Field(default="", max_length=120)
+class LeadFacts(BaseModel):
+    """Structured qualification facts shared by the demo and CRM preview."""
     country: str = Field(default="", max_length=80)
     employee_count: int | None = Field(default=None, ge=0, le=1000000)
     industry: str = Field(default="", max_length=120)
     contact_name: str = Field(default="", max_length=120)
     business_email: str = Field(default="", max_length=254)
-    stated_use_case: str = Field(default="", max_length=600)
     lead_source: str = Field(default="", max_length=120)
     consent_status: Literal["Opted In", "Opted Out", "Unknown", "Missing"] = "Missing"
     assigned_owner: str = Field(default="", max_length=120)
@@ -46,6 +45,11 @@ class LeadInput(BaseModel):
     custom_contract_terms: bool = False
     suspected_security_incident: bool = False
     urgent_service_outage: bool = False
+
+
+class LeadInput(LeadFacts):
+    company_name: str = Field(default="", max_length=160)
+    stated_use_case: str = Field(default="", max_length=600)
 
 
 class Action(BaseModel):

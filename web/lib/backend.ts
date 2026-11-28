@@ -27,7 +27,7 @@ export function validId(value:string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
-async function apiRequest<T>(path:string, init:RequestInit = {}):Promise<T> {
+async function apiRequest<T>(path:string, init:RequestInit = {}, timeoutMs = 10000):Promise<T> {
   const { token } = await auth0.getAccessToken();
   const base = configuredBackend();
   const url = new URL(path, base);
@@ -44,7 +44,7 @@ async function apiRequest<T>(path:string, init:RequestInit = {}):Promise<T> {
         Accept: "application/json",
         ...(init.body ? { "Content-Type": "application/json" } : {}),
       },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
     throw new BackendError(503, "Cannot connect to the local API.");
@@ -165,4 +165,45 @@ export async function getLeadRecommendation(
   leadId: string
 ): Promise<LeadRecommendation> {
   return apiRequest<LeadRecommendation>(leadPath(orgId, leadId) + "/recommendation");
+}
+
+export type QualificationProvider = "none" | "gemini" | "claude";
+
+export type QualificationPreview = {
+  stored_status: "new" | "qualified";
+  decision: {
+    qualification_status: "Incomplete" | "Needs clarification" | "Qualified";
+    provisional_score: number | null;
+    priority_tier: "A" | "B" | "C" | null;
+    market_region: string;
+    score_components: Record<string, number | null>;
+    missing_fields: string[];
+    unclear_scoring_factors: string[];
+    recommended_routing: string;
+    queue_status: string;
+    follow_up_target: string | null;
+    human_review_required: boolean;
+    actions: {action:string; owner:string; deadline:string|null; handbook_section:string}[];
+    explanations: string[];
+    source_sections: string[];
+    policy_version: string;
+  };
+  provider: QualificationProvider;
+  explanation_status: "not_requested" | "withheld_incomplete" | "unavailable" | "complete";
+  explanation: string | null;
+  source_documents: string[];
+  followup_approval_required: true;
+  automated_actions_taken: 0;
+};
+
+export async function previewLeadQualification(
+  orgId: string, leadId: string,
+  facts: Record<string, string | number | boolean | null>,
+  provider: QualificationProvider
+): Promise<QualificationPreview> {
+  return apiRequest<QualificationPreview>(
+    leadPath(orgId, leadId) + "/qualification-preview",
+    { method: "POST", body: JSON.stringify({ facts, provider, confirm_synthetic: true }) },
+    provider === "none" ? 10000 : 115000
+  );
 }

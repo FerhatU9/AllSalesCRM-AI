@@ -16,6 +16,10 @@ from allsales.auth import VerifiedIdentity, get_verified_identity
 from allsales.models import Identity, LeadAuditEvent, LeadRecord, find_membership
 from allsales.storage import session_factory
 from allsales.recommendation_graph import Recommendation, recommend_lead
+from allsales.lead_qualification import LeadInput
+from allsales.qualification_graph import (
+    QualificationPreview, QualificationPreviewRequest, preview_qualification,
+)
 
 
 router = APIRouter(prefix="/v1/organizations/{organization_id}/leads", tags=["Leads"])
@@ -172,6 +176,32 @@ def lead_recommendation(
     response.headers["Cache-Control"] = "no-store"
     # Only these two derived facts enter the graph; no lead text is sent.
     return recommend_lead(record.status, bool(record.summary.strip()))
+
+
+@router.post("/{lead_id}/qualification-preview", response_model=QualificationPreview)
+def qualification_preview(
+    organization_id: UUID,
+    lead_id: UUID,
+    payload: QualificationPreviewRequest,
+    response: Response,
+    identity: VerifiedIdentity = Depends(get_verified_identity),
+    session=Depends(safe_session),
+):
+    """Evaluate submitted fictional facts for an authorized non-archived lead."""
+    record = scoped_record(session, identity, organization_id, lead_id, write=True)
+    status = record.status
+    if status not in {"new", "qualified"}:
+        raise HTTPException(status_code=409, detail="Archived leads cannot be evaluated")
+    # Company and use case are server-derived; the payload cannot override them.
+    lead = LeadInput(
+        company_name=record.company_name,
+        stated_use_case=record.summary,
+        **payload.facts.model_dump(),
+    )
+    # Release the read transaction before a potentially slow opt-in provider call.
+    session.rollback()
+    response.headers["Cache-Control"] = "no-store"
+    return preview_qualification(lead, status, payload.provider)
 
 
 @router.patch("/{lead_id}", response_model=LeadView)

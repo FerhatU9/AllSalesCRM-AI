@@ -1,0 +1,154 @@
+"use client";
+
+import { useRef, useState, useTransition, type FormEvent } from "react";
+import { qualificationPreviewAction } from "@/app/workspace/actions";
+import type { QualificationPreview } from "@/lib/backend";
+
+const SAMPLE: Record<string, string> = {
+  country: "Netherlands", employee_count: "120", industry: "SaaS",
+  contact_name: "Demo Buyer", business_email: "buyer@example.test",
+  lead_source: "Website", consent_status: "Opted In", assigned_owner: "Demo Rep",
+  decision_days: "20", decision_authority: "final", engagement: "none",
+  proposed_discount_pct: "0", provider: "none",
+};
+const LABELS: Record<string, string> = {
+  company_fit: "Company fit", purchase_urgency: "Purchase urgency",
+  decision_authority: "Decision authority", engagement: "Engagement",
+};
+const checkboxes = [
+  ["custom_contract_terms", "Custom contract terms"],
+  ["suspected_security_incident", "Suspected security incident"],
+  ["urgent_service_outage", "Urgent service outage"],
+];
+
+function Results({result}: {result: QualificationPreview}) {
+  const d = result.decision;
+  return (
+    <div className="lead-list">
+      <section className="panel" aria-labelledby="deterministic">
+        <span className="pill">LangGraph · Deterministic rules</span>
+        <h2 id="deterministic">{d.qualification_status}</h2>
+        <div className="qualification-score">
+          <strong>{d.provisional_score === null ? "—" : `${d.provisional_score}/100`}</strong>
+          <span>Provisional score · {d.priority_tier ? `Tier ${d.priority_tier}` : "No assigned tier"}</span>
+        </div>
+        <dl className="qualification-detail">
+          {Object.entries(d.score_components).map(([key, value]) => (
+            <div key={key}><dt>{LABELS[key] ?? key}</dt><dd>{value ?? "Unverified"}</dd></div>
+          ))}
+          <div><dt>Market</dt><dd>{d.market_region}</dd></div>
+          <div><dt>Routing</dt><dd>{d.recommended_routing}</dd></div>
+          <div><dt>Queue</dt><dd>{d.queue_status}</dd></div>
+          <div><dt>Follow-up target</dt><dd>{d.follow_up_target ?? "Not set"}</dd></div>
+          <div><dt>Policy exception review</dt><dd>{d.human_review_required ? "Required" : "None flagged"}</dd></div>
+        </dl>
+        {d.missing_fields.length > 0 && <p><strong>Missing:</strong> {d.missing_fields.join(", ")}</p>}
+        {d.unclear_scoring_factors.length > 0 && <p><strong>Unverified:</strong> {d.unclear_scoring_factors.join(", ")}</p>}
+        <h3>Policy actions to review</h3>
+        {d.actions.length ? <ul>{d.actions.map((action, i) => (
+          <li key={i}>{action.action} — {action.owner}{action.deadline ? ` · ${action.deadline}` : ""} (section {action.handbook_section})</li>
+        ))}</ul> : <p>No additional policy actions flagged.</p>}
+        {d.explanations.length > 0 && <ul>{d.explanations.map((item, i) => <li key={i}>{item}</li>)}</ul>}
+        <p className="muted-note">{d.policy_version} · {d.source_sections.join(", ") || "—"}</p>
+        <p className="product-caveat">Stored status remains {result.stored_status}. No preview data is stored in the CRM and no automated actions are taken. Human approval remains required for every follow-up.</p>
+      </section>
+      <section className="panel">
+        <span className="pill">Optional · Advisory only</span>
+        <h2>AI explanation</h2>
+        {result.explanation_status === "complete" ? <>
+          <p><strong>{result.provider === "gemini" ? "Gemini" : "Claude"} via Dify</strong> — verify against the handbook.</p>
+          <p className="qualification-explanation">{result.explanation}</p>
+          {result.source_documents.length > 0 && <p className="muted-note">Provider-reported sources: {result.source_documents.join(", ")}</p>}
+        </> : <p>{
+          result.explanation_status === "not_requested" ? "No AI model requested. The deterministic preview is complete."
+          : result.explanation_status === "withheld_incomplete" ? "Explanation withheld until the required facts and scoring factors are complete."
+          : "The selected provider is unavailable. The deterministic result remains valid."
+        }</p>}
+        <p className="product-caveat">AI text is not an approval, a policy override or a guarantee of correctness.</p>
+      </section>
+    </div>
+  );
+}
+
+export default function QualificationForm({orgId, leadId}: {orgId:string; leadId:string}) {
+  const form = useRef<HTMLFormElement>(null);
+  const [result, setResult] = useState<QualificationPreview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  function loadExample() {
+    for (const [key, value] of Object.entries(SAMPLE)) {
+      const field = form.current?.elements.namedItem(key);
+      if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement) field.value = value;
+    }
+    for (const key of ["confirm_synthetic", ...checkboxes.map(([name]) => name)]) {
+      const field = form.current?.elements.namedItem(key);
+      if (field instanceof HTMLInputElement) field.checked = false;
+    }
+    setResult(null); setError(null);
+  }
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    setError(null); setResult(null);
+    startTransition(async () => {
+      try {
+        const response = await qualificationPreviewAction(orgId, leadId, data);
+        setResult(response.result); setError(response.error);
+      } catch {
+        setError("Preview unavailable. Check your session and local API.");
+      }
+    });
+  }
+  return (
+    <div className="columns">
+      <section className="panel">
+        <h2>Structured lead facts</h2>
+        <p className="muted-note">Company name and use case come from the stored record. Enter fictional facts only. Unknown or missing facts are not guessed.</p>
+        <form ref={form} className="form-stack" onSubmit={submit} onChange={() => {setResult(null); setError(null);}}>
+          <fieldset disabled={pending} className="qualification-fields">
+            <button type="button" className="button" onClick={loadExample}>Load synthetic example</button>
+            <div className="qualification-grid">
+              <label>Country<input name="country" maxLength={80} /></label>
+              <label>Employees<input name="employee_count" type="number" min="0" max="1000000" step="1" /></label>
+              <label>Industry<input name="industry" maxLength={120} /></label>
+              <label>Fictional contact<input name="contact_name" maxLength={120} /></label>
+              <label>Fictional business email<input name="business_email" type="email" maxLength={254} /></label>
+              <label>Lead source<input name="lead_source" maxLength={120} /></label>
+              <label>Consent status<select name="consent_status" defaultValue="Missing">
+                <option>Missing</option><option>Unknown</option><option>Opted In</option><option>Opted Out</option>
+              </select></label>
+              <label>Assigned owner<input name="assigned_owner" maxLength={120} /></label>
+              <label>Days to decision<input name="decision_days" type="number" min="0" max="3650" step="1" /></label>
+              <label>Decision authority<select name="decision_authority" defaultValue="unknown">
+                <option value="unknown">Unknown</option><option value="final">Final decision maker</option>
+                <option value="influencer">Influencer</option><option value="none">None</option>
+              </select></label>
+              <label>Engagement<select name="engagement" defaultValue="unknown">
+                <option value="unknown">Unknown</option><option value="demo_booked">Demo booked</option>
+                <option value="email_replied">Email replied</option><option value="none">None</option>
+              </select></label>
+              <label>Proposed discount (%)<input name="proposed_discount_pct" type="number" min="0" max="100" step="0.1" /></label>
+            </div>
+            <h3 className="subheading">Policy exceptions</h3>
+            {checkboxes.map(([name, label]) => (
+              <label className="qualification-check" key={name}><input name={name} type="checkbox" />{label}</label>
+            ))}
+            <label>Explanation mode<select name="provider" defaultValue="none">
+              <option value="none">Local rules only (default)</option>
+              <option value="gemini">Gemini via Dify</option><option value="claude">Claude via Dify</option>
+            </select></label>
+            <p className="muted-note">Selecting a model sends only derived policy facts to Dify, may incur provider costs, and can take up to two minutes. No contact identifiers or raw lead text are sent.</p>
+            <label className="qualification-check"><input name="confirm_synthetic" type="checkbox" required />I confirm that this evaluation uses fictional demonstration data only.</label>
+            <button className="button primary" type="submit" disabled={pending}>{pending ? "Evaluating…" : "Preview qualification"}</button>
+          </fieldset>
+        </form>
+        {error && <p className="notice error" role="alert">{error}</p>}
+      </section>
+      {result ? <Results result={result} /> :
+        <section className="panel" role="status">
+          <h2>Qualification preview</h2>
+          <p>{pending ? "Evaluating the submitted facts. Please wait." : "Submit synthetic facts to see the score, routing and policy actions. Nothing is saved in the CRM."}</p>
+        </section>}
+    </div>
+  );
+}

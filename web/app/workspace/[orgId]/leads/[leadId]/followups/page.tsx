@@ -240,9 +240,14 @@ export default async function FollowupPage({
               <p role="status">Recommendation unavailable. You can still review follow-ups.</p>
             )}
             <p className="product-caveat">
-              Guidance only. No AI model or external delivery is used in this stage.
+              Guidance only. No AI model or external delivery is used in this panel.
               Human approval is required for any follow-up action.
             </p>
+            {org.role !== "viewer" && lead.status !== "archived" && (
+              <Link className="button" href={`/workspace/${orgId}/leads/${leadId}/qualification`}>
+                Evaluate lead
+              </Link>
+            )}
           </section>
 
           <section className="panel">
