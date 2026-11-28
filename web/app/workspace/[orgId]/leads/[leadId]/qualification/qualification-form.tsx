@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition, type FormEvent } from "react";
-import { qualificationPreviewAction } from "@/app/workspace/actions";
+import { useRouter } from "next/navigation";
+import { qualificationPreviewAction, saveQualificationAction } from "@/app/workspace/actions";
 import type { QualificationPreview } from "@/lib/backend";
 
 const SAMPLE: Record<string, string> = {
@@ -64,7 +65,7 @@ function Results({result}: {result: QualificationPreview}) {
         ))}</ul> : <p>No additional policy actions flagged.</p>}
         {d.explanations.length > 0 && <ul>{d.explanations.map((item, i) => <li key={i}>{item}</li>)}</ul>}
         <p className="muted-note">{d.policy_version} · {d.source_sections.join(", ") || "—"}</p>
-        <p className="product-caveat">Stored status remains {result.stored_status}. No preview data is stored in the CRM and no automated actions are taken. Human approval remains required for every follow-up.</p>
+        <p className="product-caveat">Stored status remains {result.stored_status}. A preview alone stores nothing. Saving records only the deterministic decision; no automated actions are taken. Human approval remains required for every follow-up.</p>
       </section>
       <section className="panel">
         <span className="pill">Optional · Advisory only</span>
@@ -92,9 +93,18 @@ function Results({result}: {result: QualificationPreview}) {
 
 export default function QualificationForm({orgId, leadId}: {orgId:string; leadId:string}) {
   const form = useRef<HTMLFormElement>(null);
+  const router = useRouter();
+  const reviewed = useRef<{data: FormData; key: string} | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const [result, setResult] = useState<QualificationPreview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  function clearPreview() {
+    reviewed.current = null;
+    setResult(null); setError(null); setSaved(false); setSaveError(null);
+  }
   function loadExample() {
     for (const [key, value] of Object.entries(SAMPLE)) {
       const field = form.current?.elements.namedItem(key);
@@ -104,18 +114,36 @@ export default function QualificationForm({orgId, leadId}: {orgId:string; leadId
       const field = form.current?.elements.namedItem(key);
       if (field instanceof HTMLInputElement) field.checked = false;
     }
-    setResult(null); setError(null);
+    clearPreview();
   }
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    setError(null); setResult(null);
+    clearPreview();
     startTransition(async () => {
       try {
         const response = await qualificationPreviewAction(orgId, leadId, data);
+        if (response.result) reviewed.current = {data, key: crypto.randomUUID()};
         setResult(response.result); setError(response.error);
       } catch {
         setError("Preview unavailable. Check your session and local API.");
+      }
+    });
+  }
+  function save() {
+    const snapshot = reviewed.current;
+    if (!snapshot || !result?.review_digest || pending || saved) return;
+    setSaveError(null);
+    startTransition(async () => {
+      try {
+        const response = await saveQualificationAction(orgId, leadId, snapshot.data, snapshot.key, result.review_digest);
+        setSaveError(response.error);
+        if (response.result) {
+          setSaved(true);
+          router.refresh();
+        }
+      } catch {
+        setSaveError("Could not confirm the save. Retry the same reviewed decision.");
       }
     });
   }
@@ -124,7 +152,7 @@ export default function QualificationForm({orgId, leadId}: {orgId:string; leadId
       <section className="panel">
         <h2>Structured lead facts</h2>
         <p className="muted-note">Company name and use case come from the stored record. Enter fictional facts only. Unknown or missing facts are not guessed.</p>
-        <form ref={form} className="form-stack" onSubmit={submit} onChange={() => {setResult(null); setError(null);}}>
+        <form ref={form} className="form-stack" onSubmit={submit} onChange={clearPreview}>
           <fieldset disabled={pending} className="qualification-fields">
             <button type="button" className="button" onClick={loadExample}>Load synthetic example</button>
             <div className="qualification-grid">
@@ -159,12 +187,24 @@ export default function QualificationForm({orgId, leadId}: {orgId:string; leadId
             </select></label>
             <p className="muted-note">Selecting a model sends only derived policy facts to Dify, may incur provider costs, and can take up to two minutes. No contact identifiers or raw lead text are sent.</p>
             <label className="qualification-check"><input name="confirm_synthetic" type="checkbox" required />I confirm that this evaluation uses fictional demonstration data only.</label>
-            <button className="button primary" type="submit" disabled={pending}>{pending ? "Evaluating…" : "Preview qualification"}</button>
+            <button className="button primary" type="submit" disabled={pending}>{pending ? "Working…" : "Preview qualification"}</button>
           </fieldset>
         </form>
         {error && <p className="notice error" role="alert">{error}</p>}
       </section>
-      {result ? <Results result={result} /> :
+      {result ? <div className="lead-list">
+        <Results result={result} />
+        <section className="panel">
+          <h2>Save reviewed decision</h2>
+          <p>Save the deterministic score, routing and policy actions for this synthetic lead. The original facts, contact details and AI explanation are not stored. This does not change the lead status or approve a follow-up.</p>
+          <button type="button" className="button primary" disabled={pending || saved || !result.review_digest} onClick={save}>
+            {saved ? "Decision saved" : pending ? "Saving…" : "Save qualification"}
+          </button>
+          {saved && <p className="notice" role="status">Qualification saved. See the history below.</p>}
+          {saveError && <p className="notice error" role="alert">{saveError}</p>}
+          {!result.review_digest && <p className="notice error">Restart the updated API and preview again to enable saving.</p>}
+        </section>
+      </div> :
         <section className="panel" role="status">
           <h2>Qualification preview</h2>
           <p>{pending ? "Evaluating the submitted facts. Please wait." : "Submit synthetic facts to see the score, routing and policy actions. Nothing is saved in the CRM."}</p>

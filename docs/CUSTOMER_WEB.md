@@ -104,7 +104,7 @@ The follow-up page displays status-driven LangGraph recommendations and executio
 
 ## Structured qualification preview (draft feature)
 
-The **Evaluate lead** link on an active lead's follow-up page opens a fictional-data-only form for owner/admin/sales members. The LangGraph workflow returns a deterministic score, routing and policy actions, with optional explicitly selected Gemini/Claude explanation via Dify. No CRM data is persisted or modified by the preview. The original recommendation panel has been demonstrated locally; the new authenticated form and a live model call still need verification. See [qualification preview](QUALIFICATION_PREVIEW.md).
+The **Evaluate lead** link on an active lead's follow-up page opens a fictional-data-only form for owner/admin/sales members. The LangGraph workflow returns a deterministic score, routing and policy actions, with optional explicitly selected Gemini/Claude explanation via Dify. No CRM data is persisted or modified by the preview. The recommendation panel, authenticated deterministic preview and both live model routes have been demonstrated locally, with no provider-reported source documents. Explicit **Save qualification** records the reviewed server-calculated decision without raw inputs or AI text. View history and the organization **Sales intelligence dashboard**; viewers have read-only access. The new persistence journey requires migration 006 and local validation. See [qualification history](QUALIFICATION_HISTORY.md). See [qualification preview](QUALIFICATION_PREVIEW.md).
 
 ## Next work
 

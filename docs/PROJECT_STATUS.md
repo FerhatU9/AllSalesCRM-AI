@@ -29,9 +29,15 @@
 
 ## Structured qualification preview — deterministic path and provider connectivity demonstrated
 
-- Active synthetic leads can be evaluated by human owner/admin/sales members in the CRM. The shared policy engine calculates a score and routing; missing facts prevent a tier. No facts or decisions are persisted.
+- Active synthetic leads can be evaluated by human owner/admin/sales members in the CRM. The shared policy engine calculates a score and routing; missing facts prevent a tier. The preview itself persists no facts or decisions; explicit save is a separate operation.
 - A separate LangGraph conditional branch explains derived policy facts through the explicitly selected Dify Gemini or Claude Chatflow. No raw contact identifiers, free text, CRM tokens or tenant IDs enter that prompt. This is advisory, not approval; failed provider calls preserve the deterministic result.
 - The existing approval/execution boundary remains independent. See [qualification preview guide](QUALIFICATION_PREVIEW.md).
+
+## Qualification history and sales intelligence — implemented, local validation pending
+
+- Migration 006 adds append-only derived decision snapshots linked to the lead and verified human reviewer. Explicit save re-evaluates the rules and rejects changed decisions; same-key retries return the existing snapshot. Raw form inputs and Dify text are excluded.
+- Human owner/admin/sales members may save; viewers read only. Machine callers and unassigned tenants are denied. The dashboard counts latest saved decisions per active lead, not historical repetitions; archived history remains readable.
+- No lead status update, follow-up approval, delivery or model call occurs during save. See [qualification history and dashboard](QUALIFICATION_HISTORY.md).
 
 ## Recorded evidence
 
@@ -39,7 +45,8 @@
 | --- | --- |
 | Recommendation implementation checkout | 130 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript and synthetic Next.js build passed. Owner panel and execution timestamps demonstrated locally. |
 | Qualification preview implementation checkout | 135 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript and production build passed. Provider integration mocked; the authenticated local preview returned 85/100 Tier A for the synthetic sample. Initially both provider keys were missing; after configuring them, both live model routes returned a canonical no-evidence answer. Connectivity is demonstrated, grounded explanation quality is not. |
-| Retrieval-query and abstention update | 152 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript/build passed. Explicit handbook-section query; distinguish a model's no-evidence response from completed explanation, with score unchanged. Live revised query pending. |
+| Retrieval-query and abstention update | 152 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript/build passed. Explicit handbook-section query; distinguish a model's no-evidence response from completed explanation, with score unchanged. Live revised query demonstrated: Gemini supported all four components, tier and routing; Claude supported tier and routing but abstained on the breakdown. Neither reported source documents; grounded citation completeness remains unverified. |
+| Qualification history/dashboard checkout | 153 passed, 1 skipped, 10 warnings, 21 subtests passed; TypeScript/build passed. PostgreSQL CI case extended; new live local persistence journey pending. |
 | GitHub Actions at b1dcccc | 5/5: Python, web, browser smoke, PostgreSQL integration and CodeQL |
 | Local full Python regression at da5af67 | 122 passed, 1 skipped, 7 warnings, 21 subtests passed (developer-observed) |
 | GitHub Actions at da5af67 | 5/5: Python, web, browser smoke, PostgreSQL integration and CodeQL |
@@ -56,7 +63,7 @@ The dedicated PostgreSQL CI workflow covers migrations and lead isolation. Follo
 
 - Review least-privilege Auth0 grants, the locally reproduced template, direct live replay/timestamp evidence, the draft feature and full PostgreSQL execution concurrency/ownership and changed-lead-state cases. No scheduled execution or real outreach.
 - Self-service organization onboarding, invitations, role administration, full authenticated browser automation and live-token negative write tests.
-- Investigate Dify retrieval results and validate grounded real model explanations using synthetic data. The deterministic authenticated preview has been demonstrated. Organization-specific retrieval, source-span citations, abstention and leakage evaluation remain outstanding.
+- Validate the new qualification history/dashboard against local PostgreSQL and investigate missing Dify source reporting; validate grounded model explanations using synthetic data. The deterministic authenticated preview has been demonstrated. Organization-specific retrieval, source-span citations, abstention and leakage evaluation remain outstanding.
 - Database-enforced tenant isolation, tamper-resistant audit retention, independent security/privacy assessment.
 - Staging deployment, backups and restore drills, load testing, rate limiting, monitoring, support and controlled pilot.
 

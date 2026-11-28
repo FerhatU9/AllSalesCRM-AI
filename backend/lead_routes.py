@@ -17,6 +17,7 @@ from allsales.models import Identity, LeadAuditEvent, LeadRecord, find_membershi
 from allsales.storage import session_factory
 from allsales.recommendation_graph import Recommendation, recommend_lead
 from allsales.lead_qualification import LeadInput
+from allsales.qualification_snapshot import review_digest
 from allsales.qualification_graph import (
     QualificationPreview, QualificationPreviewRequest, preview_qualification,
 )
@@ -178,7 +179,11 @@ def lead_recommendation(
     return recommend_lead(record.status, bool(record.summary.strip()))
 
 
-@router.post("/{lead_id}/qualification-preview", response_model=QualificationPreview)
+class QualificationPreviewView(QualificationPreview):
+    review_digest: str
+
+
+@router.post("/{lead_id}/qualification-preview", response_model=QualificationPreviewView)
 def qualification_preview(
     organization_id: UUID,
     lead_id: UUID,
@@ -201,7 +206,11 @@ def qualification_preview(
     # Release the read transaction before a potentially slow opt-in provider call.
     session.rollback()
     response.headers["Cache-Control"] = "no-store"
-    return preview_qualification(lead, status, payload.provider)
+    result = preview_qualification(lead, status, payload.provider)
+    return QualificationPreviewView(
+        **result.model_dump(),
+        review_digest=review_digest(lead_id, status, result.decision.model_dump(mode="json")),
+    )
 
 
 @router.patch("/{lead_id}", response_model=LeadView)

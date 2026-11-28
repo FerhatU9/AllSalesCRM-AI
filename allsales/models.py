@@ -211,3 +211,28 @@ class FollowupRequest(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+
+class QualificationRecord(Base):
+    """Immutable synthetic policy decision; raw submitted facts are not persisted."""
+
+    __tablename__ = "qualification_records"
+    __table_args__ = (
+        UniqueConstraint("lead_id", "request_key", name="uq_qualification_request"),
+        CheckConstraint("stored_status IN ('new', 'qualified')", name="ck_qualification_stored_status"),
+        Index("ix_qualification_lead_sequence", "lead_id", "sequence"),
+    )
+
+    sequence: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), unique=True, nullable=False, default=uuid4)
+    lead_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("leads.id", ondelete="RESTRICT"), nullable=False
+    )
+    actor_identity_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("identities.id", ondelete="RESTRICT"), nullable=False
+    )
+    request_key: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    stored_status: Mapped[str] = mapped_column(String(16), nullable=False)
+    decision: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

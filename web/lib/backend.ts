@@ -170,6 +170,7 @@ export async function getLeadRecommendation(
 export type QualificationProvider = "none" | "gemini" | "claude";
 
 export type QualificationPreview = {
+  review_digest: string;
   stored_status: "new" | "qualified";
   decision: {
     qualification_status: "Incomplete" | "Needs clarification" | "Qualified";
@@ -209,4 +210,45 @@ export async function previewLeadQualification(
     { method: "POST", body: JSON.stringify({ facts, provider, confirm_synthetic: true }) },
     provider === "none" ? 10000 : 115000
   );
+}
+
+export type QualificationSnapshot = {
+  id: string;
+  lead_id: string;
+  stored_status: "new" | "qualified";
+  decision: QualificationPreview["decision"];
+  created_at: string;
+};
+
+export type QualificationDashboard = {
+  total_active: number;
+  evaluated: number;
+  not_evaluated: number;
+  needs_clarification: number;
+  tier_a: number;
+  tier_b: number;
+  tier_c: number;
+  leads: {id:string; company_name:string; status:"new"|"qualified"; latest:QualificationSnapshot|null}[];
+};
+
+export async function saveQualificationSnapshot(
+  orgId: string, leadId: string,
+  facts: Record<string, string | number | boolean | null>,
+  requestKey: string, reviewDigest: string
+): Promise<QualificationSnapshot> {
+  return apiRequest<QualificationSnapshot>(
+    leadPath(orgId, leadId) + "/qualifications",
+    {method: "POST", body: JSON.stringify({
+      facts, confirm_synthetic: true, request_key: requestKey, review_digest: reviewDigest
+    })}
+  );
+}
+
+export async function listQualificationHistory(orgId:string, leadId:string, offset=0):Promise<QualificationSnapshot[]> {
+  return apiRequest<QualificationSnapshot[]>(leadPath(orgId, leadId) + "/qualifications?limit=50&offset=" + offset);
+}
+
+export async function getQualificationDashboard(orgId:string, offset=0):Promise<QualificationDashboard> {
+  if (!validId(orgId)) throw new BackendError(404, "Invalid organization identifier.");
+  return apiRequest<QualificationDashboard>("/v1/organizations/" + orgId + "/qualification-dashboard?limit=50&offset=" + offset);
 }

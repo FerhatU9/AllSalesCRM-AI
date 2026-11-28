@@ -15,6 +15,7 @@ AllSales CRM is a local-development software project exploring how B2B sales tea
 | [Importable n8n workflow](n8n-workflows/sales_followup_automation.json) | Credential-free manual demo template; locally reproduced through approved execution |
 | [LangGraph lead recommendations](docs/LEAD_RECOMMENDATIONS.md) | Read-only, status-driven review guidance (validated local-rules panel) |
 | [Structured qualification preview](docs/QUALIFICATION_PREVIEW.md) | Draft: deterministic score with opt-in Gemini/Claude policy explanation |
+| [Qualification history and dashboard](docs/QUALIFICATION_HISTORY.md) | Draft: explicitly save derived decisions; organization-scoped latest-decision metrics |
 | [Project status and limitations](docs/PROJECT_STATUS.md) | Demonstrated behavior, automated checks and open gates |
 | [Product roadmap](docs/PRODUCTION_PLAN.md) | Hands-on implementation milestones toward a controlled pilot |
 | [Public website source](site/) | Static product showcase; it does not run the CRM backend or provide live customer access |
@@ -30,7 +31,7 @@ AllSales CRM is a local-development software project exploring how B2B sales tea
 | Human-approved follow-ups | Draft feature: pending requests, idempotent creation, owner/admin decisions, authorized execution simulation | Approval alone cannot execute |
 | n8n integration | Draft feature: restricted Auth0 machine token, lead filtering, request creation, status verification, internal execution | Local manual workflow, synthetic data only |
 | LangGraph recommendations | Draft feature: authorized read-only graph, conditional routing and review checklist in the CRM | No inferred scoring, model calls or mutations |
-| Structured qualification preview | Draft feature: synthetic facts, deterministic score, conditional optional Dify explanation | No persistence, no CRM mutation; provider use is explicit and advisory |
+| Structured qualification preview | Draft feature: synthetic facts, deterministic score, conditional optional Dify explanation | Preview is read-only; optional explicit save records a deterministic snapshot, not a CRM status change |
 | Quality engineering | Python, TypeScript, Chromium smoke tests, PostgreSQL integration, CodeQL | Not an independent security assessment |
 
 ## Architecture
@@ -84,7 +85,7 @@ The local n8n workflow retained one matching approved request and successfully t
 
 ## LangGraph lead recommendations (draft feature)
 
-The first LangGraph workflow reads two derived facts from an authorized lead: its stored status and whether it has a summary. Conditional routing produces review or hold guidance; the follow-up page displays it without creating or executing a request. This is local rule orchestration, not LLM-generated advice. See the [implementation and local validation guide](docs/LEAD_RECOMMENDATIONS.md). The developer demonstrated this panel and execution timestamps in the authenticated workspace. A separate [structured qualification preview](docs/QUALIFICATION_PREVIEW.md) evaluates explicitly supplied fictional inputs and optionally explains the deterministic score via Gemini or Claude. The local authenticated form and both Dify connections have been demonstrated; both models initially abstained after configuration. The revised retrieval-oriented query still needs live grounded-answer verification.
+The first LangGraph workflow reads two derived facts from an authorized lead: its stored status and whether it has a summary. Conditional routing produces review or hold guidance; the follow-up page displays it without creating or executing a request. This is local rule orchestration, not LLM-generated advice. See the [implementation and local validation guide](docs/LEAD_RECOMMENDATIONS.md). The developer demonstrated this panel and execution timestamps in the authenticated workspace. A separate [structured qualification preview](docs/QUALIFICATION_PREVIEW.md) evaluates explicitly supplied fictional inputs and optionally explains the deterministic score via Gemini or Claude. The local authenticated form and both Dify connections have been demonstrated; both models initially abstained after configuration. With the revised query, Gemini explained the 85-point breakdown, Tier A and SMB routing; Claude explained the tier and routing but abstained on the breakdown. Neither reported source documents. Citation verification remains open. The [qualification history and dashboard](docs/QUALIFICATION_HISTORY.md) adds explicit persistence of reviewed deterministic decisions and organization-scoped latest-decision metrics. Local authenticated persistence validation is pending.
 
 ## Run locally
 
@@ -161,7 +162,7 @@ The 34 stored final responses were manually reviewed **after retries** on 17 cur
 1. Review the locally reproduced n8n import and the draft PR; capture direct live replay/timestamp evidence.
 2. Extend execution authorization and PostgreSQL concurrency coverage; preserve the database-only simulation and never enable real outreach.
 3. Improve multi-user CRM usability, authenticated browser coverage and organization administration.
-4. Validate the new synthetic qualification preview and opt-in model explanation; then extend evidence-based retrieval and evaluate grounded answers.
+4. Validate migration 006 and the synthetic qualification history/dashboard in the authenticated local workspace, then extend evidence-based retrieval and evaluate grounded answers.
 5. Design secured Azure staging, monitoring, backup/restore, cost controls and security review.
 6. Consider a consenting controlled pilot only after release gates are met.
 

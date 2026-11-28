@@ -50,6 +50,7 @@ export default async function OrganizationWorkspace({params,searchParams}:Props)
         <span className="pill">{org.role} access</span>
         <h1 style={{marginTop:13}}>{org.name}</h1>
         <p>Review synthetic leads and manage their status within your company workspace.</p>
+        <Link className="button" href={`/workspace/${orgId}/sales-intelligence`}>Sales intelligence dashboard</Link>
       </div>
       {notice && messages[notice] && <div className={"notice "+((notice==="failed"||notice==="invalid")?"error":"")} role="status">{messages[notice]}</div>}
       {error && <div className="notice error" role="alert">{error}</div>}
@@ -72,6 +73,7 @@ export default async function OrganizationWorkspace({params,searchParams}:Props)
   >
     Follow-ups
   </Link>
+  <Link className="button" href={`/workspace/${orgId}/leads/${lead.id}/qualification`}>View qualification</Link>
 </div>
                 {canWrite && !error && (
                   <form className="inline-form" action={updateLeadStatus.bind(null,orgId,lead.id)}>
