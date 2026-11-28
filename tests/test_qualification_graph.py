@@ -177,3 +177,46 @@ def test_preview_api_roles_scope_and_no_writes(monkeypatch):
     finally:
         api.app.dependency_overrides.clear()
         engine.dispose()
+
+
+@pytest.mark.parametrize(("status", "code", "retryable", "reason"), [
+    (401, "untrusted", False, "access_rejected"),
+    (403, "untrusted", False, "access_rejected"),
+    (429, "untrusted", True, "rate_limited"),
+    (400, "untrusted", True, "provider_busy"),
+    (503, "untrusted", True, "provider_busy"),
+    (400, "untrusted", False, "request_rejected"),
+    (None, "timeout", True, "timeout"),
+    (None, "network", False, "network"),
+    (None, "invalid_response", False, "invalid_response"),
+    (None, "untrusted", False, "unknown"),
+])
+def test_provider_failure_diagnostics_are_bounded(monkeypatch, caplog, status, code, retryable, reason):
+    monkeypatch.setenv("DIFY_GEMINI_API_KEY", "synthetic-test-secret")
+
+    def fail(self, *args, **kwargs):
+        raise DifyError("private provider detail", status=status, code=code,
+                        retryable=retryable, provider_message="synthetic-test-secret")
+
+    monkeypatch.setattr(DifyClient, "ask", fail)
+    result = preview_qualification(sample(), "qualified", "gemini")
+    assert result.explanation_status == "unavailable"
+    assert result.explanation_failure == reason
+    assert result.decision.provisional_score == 85
+    assert result.automated_actions_taken == 0
+    assert "private provider detail" not in result.model_dump_json() + caplog.text
+    assert "synthetic-test-secret" not in result.model_dump_json() + caplog.text
+    assert "untrusted" not in result.model_dump_json() + caplog.text
+
+
+def test_no_key_diagnostic_and_empty_response(monkeypatch):
+    monkeypatch.delenv("DIFY_GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("DIFY_API_KEY", raising=False)
+    monkeypatch.setattr(DifyClient, "ask", lambda *a, **k: pytest.fail("Provider must not be called"))
+    assert preview_qualification(sample(), "qualified", "gemini").explanation_failure == "missing_configuration"
+    assert preview_qualification(sample(), "qualified", "none").explanation_failure is None
+    monkeypatch.setenv("DIFY_GEMINI_API_KEY", "test-key")
+    monkeypatch.setattr(DifyClient, "ask", lambda *a, **k: ChatReply(" ", "", ()))
+    assert preview_qualification(sample(), "qualified", "gemini").explanation_failure == "empty_answer"
+    monkeypatch.setenv("DIFY_BASE_URL", "http://invalid.example")
+    assert preview_qualification(sample(), "qualified", "gemini").explanation_failure == "invalid_configuration"

@@ -1,6 +1,6 @@
 # Structured qualification preview — LangGraph + optional Dify
 
-**Status (28 November 2026):** implementation and automated development checks passed on the draft follow-up branch. The existing read-only recommendation panel was demonstrated in the local authenticated customer workspace. This new preview still needs a live authenticated browser run and a real synthetic Dify call.
+**Status (28 November 2026):** implementation and automated development checks passed on the draft follow-up branch. The existing read-only recommendation panel and the new deterministic preview were demonstrated in the local authenticated customer workspace; the fictional sample produced 85/100, Tier A and SMB Sales Team routing. Both provider selections returned unavailable while preserving the local decision. Successful real Dify explanations remain unverified.
 
 ## Purpose and boundary
 
@@ -50,6 +50,22 @@ Restart the FastAPI and Next.js services using the existing ports and configurat
 
 For step 6, configure the backend's existing ignored root `.env` with `DIFY_GEMINI_API_KEY` (legacy `DIFY_API_KEY` fallback) or `DIFY_CLAUDE_API_KEY`, and `DIFY_BASE_URL` if non-default. Keep keys in local configuration, not the browser or the repository. Do not use real customer information, and do not enable provider tools or external action integrations. An explicit model selection may incur model usage and latency; the existing client has 10-second connect and 90-second read timeouts. No automatic retries or provider fallback are performed by this preview.
 
+## Diagnose unavailable AI explanations
+
+The preview continues to work even if Dify is unavailable. Updated builds show a bounded failure reason in the AI explanation panel and log only the provider name and normalized reason code in FastAPI. Neither location displays raw upstream error text, secrets or lead facts.
+
+| Reason | Check locally |
+| --- | --- |
+| Missing configuration | Root `.env`: matching published Chatflow app API key |
+| Invalid configuration | Dify base URL (HTTPS, or exact local loopback) |
+| Access rejected | Dify app API key, published app/API access |
+| Rate limited | Dify/model quota and billing |
+| Provider busy or request rejected | Dify Chatflow run history, model and retrieval configuration |
+| Network or timeout | Connectivity; check existing run before retrying |
+| Invalid response or empty answer | Published Chatflow API, retrieval and Answer nodes |
+
+Restart FastAPI after changing configuration. Do not alter Auth0 permissions to resolve a Dify error. A model call may consume quota; only explicitly retry once the cause is understood. The deterministic score remains authoritative.
+
 ## API contract
 
 POST `/v1/organizations/{organization_id}/leads/{lead_id}/qualification-preview`.
@@ -79,13 +95,13 @@ Example synthetic payload (company and summary are taken from the authorized sto
 
 Allowed providers: `none` (default), `gemini`, `claude`. Owner/admin/sales can evaluate; viewers and machine callers are denied. Unassigned tenants receive 404, archived leads 409, invalid facts or absent synthetic confirmation 422. Successful responses are marked `Cache-Control: no-store`.
 
-The returned `decision` is the original deterministic policy contract; `stored_status` is unchanged. `explanation_status` is `not_requested`, `withheld_incomplete`, `unavailable` or `complete`. Every response includes `followup_approval_required: true` and `automated_actions_taken: 0`. The engine's `human_review_required` flag refers to policy exceptions, not permission to execute.
+An optional `explanation_failure` field contains a closed diagnostic code when the explanation is unavailable; it is null otherwise. The returned `decision` is the original deterministic policy contract; `stored_status` is unchanged. `explanation_status` is `not_requested`, `withheld_incomplete`, `unavailable` or `complete`. Every response includes `followup_approval_required: true` and `automated_actions_taken: 0`. The engine's `human_review_required` flag refers to policy exceptions, not permission to execute.
 
 ## Data minimization and verification
 
 Only derived region, score components, tier, routing, queue/target and policy actions enter the Dify prompt. Contact name/email, company name, raw summary, country and industry names, assigned owner, tenant IDs and tokens are not sent. A fresh random user identifier and empty conversation ID avoid reusing an existing model conversation. Provider-side retention is still possible; this is synthetic-only and does not establish data-protection compliance.
 
-Tests: [qualification graph/API](../tests/test_qualification_graph.py), [policy engine](../allsales/lead_qualification.py), [graph](../allsales/qualification_graph.py), [CRM routes](../backend/lead_routes.py). The automated checks cover local score, missing/unknown facts, both provider branches with mocked Dify, consent and discount action inclusion, no raw identifiers in the prompt, unavailable keys or provider failure, role and tenant isolation, archived records, request validation and no CRM mutations. Full Python suite: **135 passed, 1 skipped, 7 warnings, 21 subtests passed**. TypeScript and synthetic-config Next.js production build passed. No real provider call was made during automated tests.
+Tests: [qualification graph/API](../tests/test_qualification_graph.py), [policy engine](../allsales/lead_qualification.py), [graph](../allsales/qualification_graph.py), [CRM routes](../backend/lead_routes.py). The automated checks cover local score, missing/unknown facts, both provider branches with mocked Dify, consent and discount action inclusion, no raw identifiers in the prompt, unavailable keys or provider failure, role and tenant isolation, archived records, request validation and no CRM mutations. Full Python suite: **135 passed, 1 skipped, 7 warnings, 21 subtests passed**. TypeScript and synthetic-config Next.js production build passed. No real provider call was made during automated tests. The later diagnostic update passed **148 tests, 1 skipped, 7 warnings and 21 subtests**, TypeScript and the synthetic-config production build. It adds redaction and failure-category regression coverage.
 
 ## Remaining work
 

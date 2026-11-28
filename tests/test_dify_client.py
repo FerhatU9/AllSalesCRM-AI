@@ -1,5 +1,6 @@
 from allsales.dify_client import DifyClient, DifyError
 import pytest
+import requests
 
 
 class FakeResponse:
@@ -52,8 +53,9 @@ def test_high_demand_wrapped_as_400():
 
 def test_missing_answer_caught():
     fake = FakeSession(FakeResponse(200, {"conversation_id":"c42"}))
-    with pytest.raises(DifyError, match="missing an answer"):
+    with pytest.raises(DifyError, match="missing an answer") as captured:
         DifyClient("fake-test-key", session=fake).ask("hello", user_id="x")
+    assert captured.value.code == "invalid_response"
 
 
 def test_non_secure_external_endpoint_rejected():
@@ -73,3 +75,18 @@ def test_http_loopback_is_allowed_for_local_dify():
 def test_embedded_url_credentials_are_rejected():
     with pytest.raises(ValueError, match="HTTPS"):
         DifyClient("test", base_url="https://user:password@api.dify.ai/v1")
+
+
+@pytest.mark.parametrize(("exception", "expected"), [
+    (requests.Timeout("private timeout detail"), "timeout"),
+    (requests.ConnectionError("private connection detail"), "network"),
+])
+def test_connection_failure_has_local_reason(exception, expected):
+    class FailedSession:
+        def post(self, *args, **kwargs):
+            raise exception
+
+    with pytest.raises(DifyError) as captured:
+        DifyClient("fake-test-key", session=FailedSession()).ask("hello", user_id="x")
+    assert captured.value.code == expected
+    assert "private" not in str(captured.value)

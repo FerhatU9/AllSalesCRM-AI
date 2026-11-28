@@ -1,6 +1,7 @@
 """Synthetic CRM qualification preview with an explicit optional Dify explanation."""
 from __future__ import annotations
 
+import logging
 import os
 from typing import Literal, TypedDict
 from uuid import uuid4
@@ -16,6 +17,12 @@ from allsales.lead_qualification import LeadDecision, LeadFacts, LeadInput, eval
 
 Provider = Literal["none", "gemini", "claude"]
 ExplanationStatus = Literal["not_requested", "withheld_incomplete", "unavailable", "complete"]
+ExplanationFailure = Literal[
+    "missing_configuration", "invalid_configuration", "access_rejected", "rate_limited",
+    "provider_busy", "request_rejected", "timeout", "network", "invalid_response",
+    "empty_answer", "unknown"
+]
+logger = logging.getLogger(__name__)
 
 
 class PreviewFacts(LeadFacts):
@@ -34,6 +41,7 @@ class QualificationPreview(BaseModel):
     decision: LeadDecision
     provider: Provider
     explanation_status: ExplanationStatus
+    explanation_failure: ExplanationFailure | None = None
     explanation: str | None = None
     source_documents: list[str] = Field(default_factory=list)
     # The policy engine's exception-review flag is not approval to execute.
@@ -46,6 +54,7 @@ class PreviewState(TypedDict, total=False):
     provider: Provider
     decision: LeadDecision
     explanation_status: ExplanationStatus
+    explanation_failure: ExplanationFailure
     explanation: str | None
     source_documents: list[str]
 
@@ -67,16 +76,42 @@ def route_explanation(state: PreviewState) -> Literal["explain_policy", "finish"
     return "finish"
 
 
+def _failure(provider: Provider, reason: ExplanationFailure) -> dict:
+    # Log and return only our finite reason codes. Never raw Dify errors, keys,
+    # provider messages, prompts or contact data.
+    logger.warning("Qualification explanation unavailable: provider=%s reason=%s", provider, reason)
+    return {"explanation_status": "unavailable", "explanation_failure": reason}
+
+
+def _classify_error(error: DifyError) -> ExplanationFailure:
+    if error.status in (401, 403):
+        return "access_rejected"
+    if error.status == 429:
+        return "rate_limited"
+    if error.status is not None:
+        if error.status >= 500 or (error.status == 400 and error.retryable):
+            return "provider_busy"
+        return "request_rejected"
+    # These codes are assigned locally by DifyClient to errors without an HTTP status.
+    if error.code == "timeout":
+        return "timeout"
+    if error.code == "network":
+        return "network"
+    if error.code == "invalid_response":
+        return "invalid_response"
+    return "unknown"
+
+
 def explain_policy(state: PreviewState) -> dict:
     provider = state["provider"]
     if provider == "gemini":
-        key = (os.getenv("DIFY_GEMINI_API_KEY") or os.getenv("DIFY_API_KEY") or "").strip()
+        key = os.getenv("DIFY_GEMINI_API_KEY", "").strip() or os.getenv("DIFY_API_KEY", "").strip()
     elif provider == "claude":
         key = os.getenv("DIFY_CLAUDE_API_KEY", "").strip()
     else:
-        return {"explanation_status": "unavailable"}
+        return _failure(provider, "invalid_configuration")
     if not key:
-        return {"explanation_status": "unavailable"}
+        return _failure(provider, "missing_configuration")
 
     decision = state["decision"]
     # Only the rule engine's fixed categories, numeric score and policy actions
@@ -91,12 +126,13 @@ def explain_policy(state: PreviewState) -> dict:
         reply = DifyClient(
             api_key=key, base_url=os.getenv("DIFY_BASE_URL", "https://api.dify.ai/v1")
         ).ask(prompt, user_id=str(uuid4()), conversation_id="")
-    except (DifyError, ValueError):
-        # No raw provider errors, no automatic retries, and no switching models.
-        return {"explanation_status": "unavailable"}
+    except DifyError as error:
+        return _failure(provider, _classify_error(error))
+    except ValueError:
+        return _failure(provider, "invalid_configuration")
     answer = reply.answer.strip()
     if not answer:
-        return {"explanation_status": "unavailable"}
+        return _failure(provider, "empty_answer")
     return {
         "explanation_status": "complete",
         "explanation": answer[:4000],
@@ -132,6 +168,7 @@ def preview_qualification(
         decision=result["decision"],
         provider=provider,
         explanation_status=result["explanation_status"],
+        explanation_failure=result.get("explanation_failure"),
         explanation=result.get("explanation"),
         source_documents=result.get("source_documents", []),
     )

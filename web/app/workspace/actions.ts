@@ -177,8 +177,10 @@ export async function qualificationPreviewAction(
       ? "Some values are invalid. Check the form and try again."
       : err instanceof BackendError && err.status === 409
       ? "This lead is archived and cannot be evaluated."
-      : err instanceof BackendError && (err.status === 403 || err.status === 404)
+      : err instanceof BackendError && err.status === 403
       ? "You do not have access to evaluate this lead."
+      : err instanceof BackendError && err.status === 404
+      ? "The lead or preview endpoint was not found. Check access and restart the updated local API."
       : "Preview unavailable. Check your session and local API.";
     return {result: null, error};
   }

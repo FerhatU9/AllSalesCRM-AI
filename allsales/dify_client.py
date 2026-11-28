@@ -94,18 +94,18 @@ class DifyClient:
                 timeout=(10, 90),
             )
         except requests.Timeout as exc:
-            raise DifyError("The request timed out. Please try again later.", retryable=True) from exc
+            raise DifyError("The request timed out. Please try again later.", code="timeout", retryable=True) from exc
         except requests.RequestException as exc:
-            raise DifyError("Could not contact Dify. Check your connection and service URL.") from exc
+            raise DifyError("Could not contact Dify. Check your connection and service URL.", code="network") from exc
 
         if response.status_code >= 400:
             raise _read_error(response)
         try:
             payload = response.json()
         except (ValueError, TypeError) as exc:
-            raise DifyError("Dify returned unreadable JSON.") from exc
+            raise DifyError("Dify returned unreadable JSON.", code="invalid_response") from exc
         if not isinstance(payload, dict) or not isinstance(payload.get("answer"), str):
-            raise DifyError("Dify response is missing an answer field.")
+            raise DifyError("Dify response is missing an answer field.", code="invalid_response")
         metadata = payload.get("metadata") or {}
         if not isinstance(metadata, dict):
             metadata = {}

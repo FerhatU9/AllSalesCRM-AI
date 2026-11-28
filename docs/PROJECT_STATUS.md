@@ -27,7 +27,7 @@
 - LangGraph routes stored status and summary presence into a deterministic review or hold checklist. It does not infer policy scores, access free text, call an LLM, retain graph state or create follow-up requests. Remote tracing is disabled.
 - Next.js displays the recommendation beside existing human approval controls and shows stored execution timestamps. See [implementation and verification guide](LEAD_RECOMMENDATIONS.md).
 
-## Structured qualification preview — implemented, live validation pending
+## Structured qualification preview — deterministic path demonstrated, model verification pending
 
 - Active synthetic leads can be evaluated by human owner/admin/sales members in the CRM. The shared policy engine calculates a score and routing; missing facts prevent a tier. No facts or decisions are persisted.
 - A separate LangGraph conditional branch explains derived policy facts through the explicitly selected Dify Gemini or Claude Chatflow. No raw contact identifiers, free text, CRM tokens or tenant IDs enter that prompt. This is advisory, not approval; failed provider calls preserve the deterministic result.
@@ -38,7 +38,7 @@
 | Evidence | Result and limitation |
 | --- | --- |
 | Recommendation implementation checkout | 130 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript and synthetic Next.js build passed. Owner panel and execution timestamps demonstrated locally. |
-| Qualification preview implementation checkout | 135 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript and production build passed. Provider integration mocked; authenticated preview UI not yet live-validated. |
+| Qualification preview implementation checkout | 135 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript and production build passed. Provider integration mocked; the authenticated local preview returned 85/100 Tier A for the synthetic sample. Both real provider selections were unavailable; no successful live AI explanation yet. |
 | GitHub Actions at b1dcccc | 5/5: Python, web, browser smoke, PostgreSQL integration and CodeQL |
 | Local full Python regression at da5af67 | 122 passed, 1 skipped, 7 warnings, 21 subtests passed (developer-observed) |
 | GitHub Actions at da5af67 | 5/5: Python, web, browser smoke, PostgreSQL integration and CodeQL |
@@ -55,7 +55,7 @@ The dedicated PostgreSQL CI workflow covers migrations and lead isolation. Follo
 
 - Review least-privilege Auth0 grants, the locally reproduced template, direct live replay/timestamp evidence, the draft feature and full PostgreSQL execution concurrency/ownership and changed-lead-state cases. No scheduled execution or real outreach.
 - Self-service organization onboarding, invitations, role administration, full authenticated browser automation and live-token negative write tests.
-- Validate the new structured preview and model explanation in the local authenticated browser using synthetic data. Organization-specific retrieval, source-span citations, abstention and leakage evaluation remain outstanding.
+- Resolve Dify provider availability and validate real model explanations using synthetic data. The deterministic authenticated preview has been demonstrated. Organization-specific retrieval, source-span citations, abstention and leakage evaluation remain outstanding.
 - Database-enforced tenant isolation, tamper-resistant audit retention, independent security/privacy assessment.
 - Staging deployment, backups and restore drills, load testing, rate limiting, monitoring, support and controlled pilot.
 

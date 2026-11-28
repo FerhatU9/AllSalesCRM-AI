@@ -190,6 +190,9 @@ export type QualificationPreview = {
   };
   provider: QualificationProvider;
   explanation_status: "not_requested" | "withheld_incomplete" | "unavailable" | "complete";
+  explanation_failure: "missing_configuration" | "invalid_configuration" | "access_rejected" |
+    "rate_limited" | "provider_busy" | "request_rejected" | "timeout" | "network" |
+    "invalid_response" | "empty_answer" | "unknown" | null;
   explanation: string | null;
   source_documents: string[];
   followup_approval_required: true;

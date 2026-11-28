@@ -21,6 +21,20 @@ const checkboxes = [
   ["urgent_service_outage", "Urgent service outage"],
 ];
 
+const FAILURE_GUIDANCE: Record<NonNullable<QualificationPreview["explanation_failure"]>, string> = {
+  missing_configuration: "The selected Dify app key is not configured in the local backend .env.",
+  invalid_configuration: "Check the Dify base URL and selected app configuration in the local backend.",
+  access_rejected: "Dify rejected access. Check the published Chatflow's app API key.",
+  rate_limited: "Dify or its model provider reached a usage limit. Check quota and billing.",
+  provider_busy: "Dify or its upstream model returned a service error. Check the Chatflow run and try again later.",
+  request_rejected: "Dify rejected the request. Check the published Chatflow and its run history.",
+  timeout: "Dify did not respond in time. Check the Chatflow run before trying again.",
+  network: "The backend could not contact Dify. Check connectivity and the API address.",
+  invalid_response: "Dify returned an unexpected response. Check the published Chatflow's API.",
+  empty_answer: "Dify returned an empty answer. Check the Chatflow's retrieval and Answer nodes.",
+  unknown: "The selected provider is unavailable. Check the local API terminal and Dify run history.",
+};
+
 function Results({result}: {result: QualificationPreview}) {
   const d = result.decision;
   return (
@@ -62,7 +76,7 @@ function Results({result}: {result: QualificationPreview}) {
         </> : <p>{
           result.explanation_status === "not_requested" ? "No AI model requested. The deterministic preview is complete."
           : result.explanation_status === "withheld_incomplete" ? "Explanation withheld until the required facts and scoring factors are complete."
-          : "The selected provider is unavailable. The deterministic result remains valid."
+          : `${FAILURE_GUIDANCE[result.explanation_failure ?? "unknown"]} The deterministic result remains valid.`
         }</p>}
         <p className="product-caveat">AI text is not an approval, a policy override or a guarantee of correctness.</p>
       </section>
