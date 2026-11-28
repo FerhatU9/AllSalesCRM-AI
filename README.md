@@ -13,7 +13,8 @@ AllSales CRM is a local-development software project exploring how B2B sales tea
 | [**Technical engineering report (PDF)**](docs/AllSales_CRM_Technical_Report.pdf) | Nine-page architecture and release-readiness report (approval-stage snapshot at 1409a49) |
 | [Follow-up automation guide](docs/FOLLOWUP_AUTOMATION.md) | Reproduce the locally demonstrated Auth0 → n8n → CRM workflow on the feature branch |
 | [Importable n8n workflow](n8n-workflows/sales_followup_automation.json) | Credential-free manual demo template; locally reproduced through approved execution |
-| [LangGraph lead recommendations](docs/LEAD_RECOMMENDATIONS.md) | Read-only, status-driven review guidance (local rules; no LLM call yet) |
+| [LangGraph lead recommendations](docs/LEAD_RECOMMENDATIONS.md) | Read-only, status-driven review guidance (validated local-rules panel) |
+| [Structured qualification preview](docs/QUALIFICATION_PREVIEW.md) | Draft: deterministic score with opt-in Gemini/Claude policy explanation |
 | [Project status and limitations](docs/PROJECT_STATUS.md) | Demonstrated behavior, automated checks and open gates |
 | [Product roadmap](docs/PRODUCTION_PLAN.md) | Hands-on implementation milestones toward a controlled pilot |
 | [Public website source](site/) | Static product showcase; it does not run the CRM backend or provide live customer access |
@@ -29,6 +30,7 @@ AllSales CRM is a local-development software project exploring how B2B sales tea
 | Human-approved follow-ups | Draft feature: pending requests, idempotent creation, owner/admin decisions, authorized execution simulation | Approval alone cannot execute |
 | n8n integration | Draft feature: restricted Auth0 machine token, lead filtering, request creation, status verification, internal execution | Local manual workflow, synthetic data only |
 | LangGraph recommendations | Draft feature: authorized read-only graph, conditional routing and review checklist in the CRM | No inferred scoring, model calls or mutations |
+| Structured qualification preview | Draft feature: synthetic facts, deterministic score, conditional optional Dify explanation | No persistence, no CRM mutation; provider use is explicit and advisory |
 | Quality engineering | Python, TypeScript, Chromium smoke tests, PostgreSQL integration, CodeQL | Not an independent security assessment |
 
 ## Architecture
@@ -54,7 +56,7 @@ flowchart LR
     end
 ```
 
-Solid connections represent the CRM foundation; dotted connections represent the draft follow-up integration. The legacy Streamlit demo uses a shared local development token. The authenticated workspace uses provider-issued access tokens; all authorization decisions are made in FastAPI, not the browser or n8n. The authenticated workspace does not yet expose the Dify policy assistant or organization-specific retrieval.
+Solid connections represent the CRM foundation; dotted connections represent the draft follow-up integration. The legacy Streamlit demo uses a shared local development token. The authenticated workspace uses provider-issued access tokens; all authorization decisions are made in FastAPI, not the browser or n8n. The draft CRM includes a separate qualification preview with an optional Dify explanation of derived policy facts. Organization-specific retrieval is not implemented.
 
 See [architecture and commercial requirements](docs/COMMERCIAL_ARCHITECTURE.md) and the [security policy](SECURITY.md).
 
@@ -82,7 +84,7 @@ The local n8n workflow retained one matching approved request and successfully t
 
 ## LangGraph lead recommendations (draft feature)
 
-The first LangGraph workflow reads two derived facts from an authorized lead: its stored status and whether it has a summary. Conditional routing produces review or hold guidance; the follow-up page displays it without creating or executing a request. This is local rule orchestration, not LLM-generated advice. See the [implementation and local validation guide](docs/LEAD_RECOMMENDATIONS.md).
+The first LangGraph workflow reads two derived facts from an authorized lead: its stored status and whether it has a summary. Conditional routing produces review or hold guidance; the follow-up page displays it without creating or executing a request. This is local rule orchestration, not LLM-generated advice. See the [implementation and local validation guide](docs/LEAD_RECOMMENDATIONS.md). The developer demonstrated this panel and execution timestamps in the authenticated workspace. A separate [structured qualification preview](docs/QUALIFICATION_PREVIEW.md) evaluates explicitly supplied fictional inputs and optionally explains the deterministic score via Gemini or Claude. Real model calls and the new authenticated form still need live validation.
 
 ## Run locally
 
@@ -159,7 +161,7 @@ The 34 stored final responses were manually reviewed **after retries** on 17 cur
 1. Review the locally reproduced n8n import and the draft PR; capture direct live replay/timestamp evidence.
 2. Extend execution authorization and PostgreSQL concurrency coverage; preserve the database-only simulation and never enable real outreach.
 3. Improve multi-user CRM usability, authenticated browser coverage and organization administration.
-4. Extend the initial read-only LangGraph workflow with structured qualification inputs, evidence-based retrieval and constrained AI explanations.
+4. Validate the new synthetic qualification preview and opt-in model explanation; then extend evidence-based retrieval and evaluate grounded answers.
 5. Design secured Azure staging, monitoring, backup/restore, cost controls and security review.
 6. Consider a consenting controlled pilot only after release gates are met.
 

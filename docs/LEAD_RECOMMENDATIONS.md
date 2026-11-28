@@ -1,6 +1,6 @@
 # Lead recommendations — LangGraph
 
-**Development milestone:** a local, read-only recommendation workflow on the follow-up feature branch. It uses LangGraph's graph orchestration, but does not yet call Gemini, Claude or any external model. The existing Dify and deterministic qualification demos remain separate.
+**Development milestone:** a local, read-only recommendation workflow on the follow-up feature branch. It uses LangGraph's graph orchestration, but does not yet call Gemini, Claude or any external model. The separate [qualification preview](QUALIFICATION_PREVIEW.md) now reuses the existing deterministic engine and Dify adapters; this original panel remains purely local.
 
 ## Why add LangGraph?
 
@@ -68,10 +68,10 @@ API contract: `GET /v1/organizations/{organization_id}/leads/{lead_id}/recommend
 
 ## Engineering verification
 
-On the development checkout (Python 3.12), all eight new graph/API tests passed and the full suite passed: 130 tests, 1 skipped PostgreSQL-only test, 7 non-blocking warnings and 21 subtests. The Next.js TypeScript check and production build with synthetic configuration passed. The live authenticated recommendation panel, real PostgreSQL concurrency and an LLM-backed recommendation are not yet validated.
+On the development checkout (Python 3.12), all eight new graph/API tests passed and the full suite passed: 130 tests, 1 skipped PostgreSQL-only test, 7 non-blocking warnings and 21 subtests. The Next.js TypeScript check and production build with synthetic configuration passed. Five GitHub Actions workflows passed at b1dcccc. The developer demonstrated the local authenticated owner panel with the expected qualified-lead checklist and execution timestamps on November 28. Real PostgreSQL concurrency coverage and live model-backed explanations remain outstanding.
 
 ## Next stage
 
-Add structured qualification inputs to the authenticated CRM, then integrate a constrained AI explanation of derived policy facts using an explicitly selected synthetic test provider. Validate citations, missing-data abstention, prompt injection, cross-tenant isolation, privacy and cost before any live customer retrieval or external action. Retain the existing human approval and idempotent backend execution as the only action boundary.
+The [structured qualification preview](QUALIFICATION_PREVIEW.md) implements fictional inputs and conditional opt-in explanation of derived policy facts. Validate the new form and real provider calls locally. Validate citations, missing-data abstention, prompt injection, cross-tenant isolation, privacy and cost before any live customer retrieval or external action. Retain the existing human approval and idempotent backend execution as the only action boundary.
 
 See the [LangGraph Graph API documentation](https://docs.langchain.com/oss/python/langgraph/graph-api), [production plan](PRODUCTION_PLAN.md), and [follow-up automation guide](FOLLOWUP_AUTOMATION.md).

@@ -1,6 +1,6 @@
 # Project status and limitations
 
-**Snapshot: November 28, 2026.** Local development prototype using synthetic sales policies, fictional leads and a local development Auth0 tenant. The [technical engineering report](AllSales_CRM_Technical_Report.pdf) records the earlier approval-stage snapshot (1409a49); this status page includes the subsequent execution milestone.
+**Snapshot: November 28, 2026.** Local development prototype using synthetic sales policies, fictional leads and a local development Auth0 tenant. The [technical engineering report](AllSales_CRM_Technical_Report.pdf) records the earlier approval-stage snapshot (1409a49); this status page includes the later execution and sales-intelligence milestones.
 
 ## Main foundation
 
@@ -21,17 +21,25 @@
 - n8n manual workflow verified health, organization lookup, qualified lead filtering, request creation, same-key retry, human approval and status retrieval. Final workflow filter retained one matching approved item; the execution endpoint returned `executed`. Execution updates the follow-up record only, with no external delivery. Backend authorization, expiry, qualification and requester ownership checks protect the transition; repeated execution returns the stored result.
 - The [sanitized importable workflow](../n8n-workflows/sales_followup_automation.json) passed static contract checks and was imported as a separate local n8n workflow. Screenshots showed a new pending synthetic record and an inactive execution node, followed by the same record in executed state after owner approval. Direct live retry/timestamp comparison is not recorded. See [import guide](FOLLOWUP_AUTOMATION.md) and [n8n setup](N8N_SETUP.md).
 
-## LangGraph recommendation milestone — implemented, local live validation pending
+## LangGraph recommendation milestone — implemented and demonstrated locally
 
 - Authenticated human-only per-lead GET recommendation endpoint; organization and lead access checked before invoking the graph.
 - LangGraph routes stored status and summary presence into a deterministic review or hold checklist. It does not infer policy scores, access free text, call an LLM, retain graph state or create follow-up requests. Remote tracing is disabled.
 - Next.js displays the recommendation beside existing human approval controls and shows stored execution timestamps. See [implementation and verification guide](LEAD_RECOMMENDATIONS.md).
 
+## Structured qualification preview — implemented, live validation pending
+
+- Active synthetic leads can be evaluated by human owner/admin/sales members in the CRM. The shared policy engine calculates a score and routing; missing facts prevent a tier. No facts or decisions are persisted.
+- A separate LangGraph conditional branch explains derived policy facts through the explicitly selected Dify Gemini or Claude Chatflow. No raw contact identifiers, free text, CRM tokens or tenant IDs enter that prompt. This is advisory, not approval; failed provider calls preserve the deterministic result.
+- The existing approval/execution boundary remains independent. See [qualification preview guide](QUALIFICATION_PREVIEW.md).
+
 ## Recorded evidence
 
 | Evidence | Result and limitation |
 | --- | --- |
-| Recommendation implementation checkout | 130 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript and synthetic Next.js build passed. Live recommendation UI still pending. |
+| Recommendation implementation checkout | 130 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript and synthetic Next.js build passed. Owner panel and execution timestamps demonstrated locally. |
+| Qualification preview implementation checkout | 135 passed, 1 skipped, 7 warnings, 21 subtests passed; TypeScript and production build passed. Provider integration mocked; authenticated preview UI not yet live-validated. |
+| GitHub Actions at b1dcccc | 5/5: Python, web, browser smoke, PostgreSQL integration and CodeQL |
 | Local full Python regression at da5af67 | 122 passed, 1 skipped, 7 warnings, 21 subtests passed (developer-observed) |
 | GitHub Actions at da5af67 | 5/5: Python, web, browser smoke, PostgreSQL integration and CodeQL |
 | Local PostgreSQL | Migration 005 applied; real local synthetic lead and follow-up data persisted |
@@ -47,7 +55,7 @@ The dedicated PostgreSQL CI workflow covers migrations and lead isolation. Follo
 
 - Review least-privilege Auth0 grants, the locally reproduced template, direct live replay/timestamp evidence, the draft feature and full PostgreSQL execution concurrency/ownership and changed-lead-state cases. No scheduled execution or real outreach.
 - Self-service organization onboarding, invitations, role administration, full authenticated browser automation and live-token negative write tests.
-- Validate the recommendation panel in the local authenticated browser. Add structured qualification fields and constrained AI explanation; organization-specific retrieval, source-span citations, abstention and leakage evaluation remain outstanding.
+- Validate the new structured preview and model explanation in the local authenticated browser using synthetic data. Organization-specific retrieval, source-span citations, abstention and leakage evaluation remain outstanding.
 - Database-enforced tenant isolation, tamper-resistant audit retention, independent security/privacy assessment.
 - Staging deployment, backups and restore drills, load testing, rate limiting, monitoring, support and controlled pilot.
 

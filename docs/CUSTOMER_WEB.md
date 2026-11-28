@@ -102,6 +102,10 @@ The [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/f
 
 The follow-up page displays status-driven LangGraph recommendations and execution timestamps. Recommendations are fetched through the server-side authorized API and remain advisory; an unavailable recommendation does not disable the existing follow-up review controls. No AI model or external delivery is enabled by this panel. See [lead recommendations](LEAD_RECOMMENDATIONS.md).
 
+## Structured qualification preview (draft feature)
+
+The **Evaluate lead** link on an active lead's follow-up page opens a fictional-data-only form for owner/admin/sales members. The LangGraph workflow returns a deterministic score, routing and policy actions, with optional explicitly selected Gemini/Claude explanation via Dify. No CRM data is persisted or modified by the preview. The original recommendation panel has been demonstrated locally; the new authenticated form and a live model call still need verification. See [qualification preview](QUALIFICATION_PREVIEW.md).
+
 ## Next work
 
 Implement controlled account provisioning and invitations, repeatable authenticated browser tests, live-token negative write checks, a policy assistant with organization-scoped retrieval, production-quality audit integrity, rate limiting, UI error/empty-state testing, and managed deployment only after security review. Disposable PostgreSQL integration tests and basic lead activity storage already exist.
