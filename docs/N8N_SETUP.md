@@ -1,6 +1,6 @@
 # Local n8n setup
 
-**Status:** Local health connectivity and authenticated follow-up workflow have been demonstrated on the draft feature branch at acd7af2, including database-only execution. Use fictional data only.
+**Status:** Local health connectivity and authenticated follow-up workflow have been demonstrated on the draft feature branch at da5af67, including reproduction from the sanitized workflow template and database-only execution. Use fictional data only.
 
 ## Isolated development instance
 
@@ -28,7 +28,7 @@ Follow the [follow-up automation guide](FOLLOWUP_AUTOMATION.md) to grant the min
 ## Acceptance checks
 
 - Demonstrated: isolated local editor, API health, OAuth2 machine token, assigned organization/lead reads, pending request, same-key retry, human decision and result verification.
-- Remaining: clean-instance reproduction of the sanitized export, least-privilege grant review and full PostgreSQL execution concurrency coverage.
+- Remaining: independent clean-instance reproduction beyond the developer’s separate local workflow import, least-privilege grant review, live replay/timestamp evidence and full PostgreSQL execution concurrency coverage.
 - No schedule, real email, outbound integration or external delivery; execution modifies only the follow-up database record. Do not weaken the API's loopback restriction to make a container connection work.
 
 Export only reviewed, sanitized workflow definitions after manual testing; never commit credentials, execution logs or private identifiers.

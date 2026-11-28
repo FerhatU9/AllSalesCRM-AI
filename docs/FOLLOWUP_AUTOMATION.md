@@ -1,6 +1,6 @@
 # Authenticated follow-up automation — local demonstration
 
-**Status (November 27, 2026):** Locally demonstrated on the [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), code snapshot [acd7af2](https://github.com/FerhatU9/AllSalesCRM-AI/commit/acd7af2b66cee07fe2d9430c0c035cc0d42e54c4), [draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32). The feature is not merged. The [technical report](AllSales_CRM_Technical_Report.pdf) records the earlier approval-stage snapshot (1409a49). This guide includes the subsequent execution milestone.
+**Status (November 28, 2026):** Locally demonstrated on the [follow-up feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval), code snapshot [da5af67](https://github.com/FerhatU9/AllSalesCRM-AI/commit/da5af676d757e6500026c47b3f2042e8e1210e5b), [draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32). The feature is not merged. The [technical report](AllSales_CRM_Technical_Report.pdf) records the earlier approval-stage snapshot (1409a49). This guide includes the subsequent execution milestone.
 
 ## 1. What the workflow proves
 
@@ -55,7 +55,7 @@ Use the exact audience configured in Auth0 and FastAPI. It is an identifier, not
 
 ## 5. Import the ten-node workflow
 
-The [credential-free JSON template](../n8n-workflows/sales_followup_automation.json) is derived from the locally demonstrated export. Local credential IDs, original request UUID, workflow instance IDs and pinned data were removed; the workflow is inactive by default. A static contract test checks the graph and approval filter. The sanitized version still needs a fresh n8n import/run to establish reproducibility.
+The [credential-free JSON template](../n8n-workflows/sales_followup_automation.json) is derived from the locally demonstrated export. Local credential IDs, original request UUID, workflow instance IDs and pinned data were removed; the workflow is inactive by default. A static contract test checks the graph and approval filter. The developer imported the sanitized version as a separate workflow, re-selected the local credential for all five protected nodes and reproduced the pending-to-executed lifecycle on November 28, 2026.
 
 1. Open the isolated local n8n editor (`http://localhost:5679`), create a **new workflow**, then use its three-dot menu → **Import → From file**. Choose `n8n-workflows/sales_followup_automation.json` from the feature branch. Do not overwrite your working original.
 2. On the five protected HTTP Request nodes (List Assigned Organizations, List Demo Leads, Request Sales Follow-up, Check Follow-up Status, Execute Approved Follow-up), select Generic Credential Type → OAuth2 API → AllSales CRM Automation. The health node remains unauthenticated.
@@ -113,8 +113,9 @@ The automation approval-denial test uses POST /followups/{followup_id}/decision 
 ## 8. Recorded evidence and remaining gates
 
 - The developer's original local n8n workflow successfully returned `executed` after human approval, and machine approval was denied with 403.
-- At code snapshot acd7af2, the reported full local Python suite passed: **121 passed, 1 skipped, 7 warnings, 21 subtests passed**. All five PR CI workflows passed (Python, web, browser smoke, PostgreSQL integration, CodeQL).
+- The separate GitHub-template import created one pending request (four total follow-up records), stopped at the approval gate, and showed the same request as executed in the CRM after an owner decision. The workflow remains manual; no external delivery was performed.
+- At snapshot da5af67, the reported full local Python suite passed: **122 passed, 1 skipped, 7 warnings, 21 subtests passed**. All five PR CI workflows passed (Python, web, browser smoke, PostgreSQL integration, CodeQL).
 - [Execution tests](../tests/test_automation_access.py) cover scope, human caller, pending/rejected/expired cases, successful execution and identical retry result. [Template contract test](../tests/test_n8n_workflow.py) checks the sanitized JSON.
-- PostgreSQL CI covers migrations and lead isolation, not complete follow-up concurrency coverage. Fresh template import, verified least-privilege grants, direct live retry comparison and additional ownership/changed-lead-state and concurrency tests remain.
+- PostgreSQL CI covers migrations and lead isolation, not complete follow-up concurrency coverage. Verified least-privilege grants, direct live retry comparison and additional ownership/changed-lead-state and concurrency tests remain.
 
 Keep the integration local, synthetic and unpublished. Passing tests and a successful simulation do not demonstrate production readiness or external delivery. See [project status](PROJECT_STATUS.md) and [production plan](PRODUCTION_PLAN.md).

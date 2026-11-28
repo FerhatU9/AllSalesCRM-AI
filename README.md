@@ -4,7 +4,7 @@
 
 AllSales CRM is a local-development software project exploring how B2B sales teams can retrieve policy information, qualify leads consistently, manage a shared pipeline, and request follow-up actions without giving an AI model or automation service unrestricted authority.
 
-> **Development status — November 27, 2026:** Synthetic-data prototype, not a deployed SaaS or a production CRM. The authenticated CRM foundation is on `main`; the locally demonstrated, machine-to-machine follow-up approval workflow is under review in [draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32). The draft feature now includes a separately authorized, retry-safe database-only execution simulation. No external outreach is enabled.
+> **Development status — November 28, 2026:** Synthetic-data prototype, not a deployed SaaS or a production CRM. The authenticated CRM foundation is on `main`; the locally demonstrated, machine-to-machine follow-up approval workflow is under review in [draft PR #32](https://github.com/FerhatU9/AllSalesCRM-AI/pull/32). The draft feature now includes a separately authorized, retry-safe database-only execution simulation. No external outreach is enabled.
 
 ## Start here
 
@@ -12,7 +12,7 @@ AllSales CRM is a local-development software project exploring how B2B sales tea
 | --- | --- |
 | [**Technical engineering report (PDF)**](docs/AllSales_CRM_Technical_Report.pdf) | Nine-page architecture and release-readiness report (approval-stage snapshot at 1409a49) |
 | [Follow-up automation guide](docs/FOLLOWUP_AUTOMATION.md) | Reproduce the locally demonstrated Auth0 → n8n → CRM workflow on the feature branch |
-| [Importable n8n workflow](n8n-workflows/sales_followup_automation.json) | Credential-free manual demo template; local import validation remains |
+| [Importable n8n workflow](n8n-workflows/sales_followup_automation.json) | Credential-free manual demo template; locally reproduced through approved execution |
 | [Project status and limitations](docs/PROJECT_STATUS.md) | Demonstrated behavior, automated checks and open gates |
 | [Product roadmap](docs/PRODUCTION_PLAN.md) | Hands-on implementation milestones toward a controlled pilot |
 | [Public website source](site/) | Static product showcase; it does not run the CRM backend or provide live customer access |
@@ -76,7 +76,7 @@ Manual Trigger → Demo Configuration → Check API Health → List Assigned Org
  → Check Follow-up Status → Verify Approved Request → Execute Approved Follow-up
 ```
 
-The local n8n workflow retained one matching approved request and successfully transitioned its status to `executed`. A separate attempt to approve using the machine identity returned HTTP 403. Execution changes the follow-up database record only; no email, notification or customer outreach occurs. The sanitized ten-node template is included; fresh-import testing is still required. See the [workflow import and verification guide](docs/FOLLOWUP_AUTOMATION.md) and [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval).
+The local n8n workflow retained one matching approved request and successfully transitioned its status to `executed`. A separate attempt to approve using the machine identity returned HTTP 403. Execution changes the follow-up database record only; no email, notification or customer outreach occurs. The sanitized ten-node template was imported into a separate local workflow, reconnected to the dedicated OAuth2 credential, and reproduced through pending creation, human approval and execution. See the [workflow import and verification guide](docs/FOLLOWUP_AUTOMATION.md) and [feature branch](https://github.com/FerhatU9/AllSalesCRM-AI/tree/feature/followup-approval).
 
 ## Run locally
 
@@ -116,10 +116,10 @@ For the draft automation feature, use the [follow-up guide](docs/FOLLOWUP_AUTOMA
 
 ## Validation and evaluation
 
-**Validated feature snapshot:** [acd7af2](https://github.com/FerhatU9/AllSalesCRM-AI/commit/acd7af2b66cee07fe2d9430c0c035cc0d42e54c4).
+**Validated feature snapshot:** [da5af67](https://github.com/FerhatU9/AllSalesCRM-AI/commit/da5af676d757e6500026c47b3f2042e8e1210e5b).
 
 - All five PR workflows passed: Python tests, web workspace checks, browser smoke tests, PostgreSQL integration and CodeQL.
-- Developer-observed full local Python regression: 121 passed, 1 skipped, 7 warnings, 21 subtests passed. Automated execution cases passed; a local n8n execution returned `executed`. Local PostgreSQL migration 005 applied successfully.
+- Developer-observed full local Python regression: 122 passed, 1 skipped, 7 warnings, 21 subtests passed. Automated execution cases passed; a local n8n execution returned `executed`. Local PostgreSQL migration 005 applied successfully.
 - Development Auth0 browser journey verified login/logout, membership, lead persistence and owner/viewer presentation. Owner approval/rejection and n8n machine approval denial were tested on the feature branch.
 - The earlier 118-pass local baseline is historical. Check [current Actions runs](https://github.com/FerhatU9/AllSalesCRM-AI/actions) for the latest results. Browser smoke checks are not a full authenticated browser suite; PostgreSQL CI covers migrations and lead isolation, not all follow-up concurrency behavior.
 
@@ -150,7 +150,7 @@ The 34 stored final responses were manually reviewed **after retries** on 17 cur
 
 ## Roadmap
 
-1. Validate the sanitized n8n import in an isolated local environment and review the draft PR.
+1. Review the locally reproduced n8n import and the draft PR; capture direct live replay/timestamp evidence.
 2. Extend execution authorization and PostgreSQL concurrency coverage; preserve the database-only simulation and never enable real outreach.
 3. Improve multi-user CRM usability, authenticated browser coverage and organization administration.
 4. Introduce evidence-based, tenant-authorized retrieval and justified LangGraph orchestration.

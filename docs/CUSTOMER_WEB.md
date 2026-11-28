@@ -29,7 +29,7 @@ Create a Regular Web Application in Auth0 and register:
 - Authorize the Regular Web Application for user-delegated access to the custom API if its application access policy requires a client grant. Machine-to-machine access is not needed for interactive sign-in.
 - API audience: e.g. `https://api.allsales.local` (an identifier, not a public API URL)
 
-Use one browser origin consistently. If using `http://127.0.0.1:3000`, configure its exact `/auth/callback` URL and allowed logout redirect (including the trailing slash if requested by the SDK). The issuer and JWKS URL must use HTTPS and the same actual tenant host, regardless of region.
+Use one browser origin consistently. Check the configured value from the repository root with `Select-String -Path web/.env.local -Pattern '^APP_BASE_URL='` (does not print secrets). During local import validation, navigation from `localhost` to a `127.0.0.1` callback produced an invalid state error despite a successful Auth0 login; restarting the sign-in at the configured `http://127.0.0.1:3000` restored access. Do not bypass state validation. If using `http://127.0.0.1:3000`, configure its exact `/auth/callback` URL and allowed logout redirect (including the trailing slash if requested by the SDK). The issuer and JWKS URL must use HTTPS and the same actual tenant host, regardless of region.
 
 Use the Auth0 domain, client ID and client secret from that application. Do not paste these credentials into GitHub issues or commit them.
 
